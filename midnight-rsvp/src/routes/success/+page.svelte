@@ -45,7 +45,7 @@
   
   <footer class="w-full py-4 px-4 mt-8">
     <p class="font-['PT_Sans',_sans-serif] text-[#081832] text-[16px] text-center leading-normal">
-      An in-person <span class="text-[#f24b4b]">murder mystery</span> by Hack Club ⋅ January 2026 ⋅ Austria, Vienna
+      An in-person <span class="text-[#f24b4b]">murder mystery</span> by Hack Club ⋅ January 2026 ⋅ Vienna, Austria
     </p>
   </footer>
 </div>
