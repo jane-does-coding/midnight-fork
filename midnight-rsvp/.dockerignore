@@ -5,13 +5,9 @@ npm-debug.log
 .env.*
 !.env.example
 .svelte-kit
-build
 .git
-.gitignore
-README.md
 .vscode
 .idea
 *.log
 coverage
-dist
 

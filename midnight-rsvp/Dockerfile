@@ -5,13 +5,13 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY midnight-rsvp/package.json midnight-rsvp/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY midnight-rsvp/ .
 RUN pnpm run build
 
 FROM base AS runner
@@ -25,7 +25,6 @@ RUN adduser --system --uid 1001 sveltekit
 COPY --from=builder --chown=sveltekit:nodejs /app/build ./build
 COPY --from=builder --chown=sveltekit:nodejs /app/package.json ./package.json
 COPY --from=deps --chown=sveltekit:nodejs /app/node_modules ./node_modules
-COPY --chown=sveltekit:nodejs ./static ./static
 
 USER sveltekit
 
