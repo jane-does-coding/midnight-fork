@@ -58,7 +58,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
     }
 
     const data = await response.json();
-    return json({ success: true, data }, { status: 201 });
+    return json({ success: true }, { status: 201 });
   } catch (error) {
     console.error('Error submitting RSVP:', error);
     return json({ error: 'Internal server error' }, { status: 500 });
