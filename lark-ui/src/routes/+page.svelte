@@ -286,6 +286,15 @@
               </button>
             </div>
             
+            <button 
+              on:click={() => goto('/faq')}
+              class="pushable-blue"
+            >
+              <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[128px] text-center text-nowrap tracking-[3.84px] 2xl:tracking-[7.68px] whitespace-pre">
+                Read More
+              </span>
+            </button>
+            
             {#if errorMessage}
               <p class="text-[#fee1c0] font-['PT_Sans',_sans-serif] text-base md:text-lg 2xl:text-4xl bg-red-900 bg-opacity-50 px-4 py-2 2xl:px-8 2xl:py-4 rounded-lg 2xl:rounded-2xl">
                 {errorMessage}
@@ -313,31 +322,11 @@
     
     <div class="absolute top-[10%] left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 rotate-[-4.25deg]">
       <button 
-        on:click={(e) => {
-          e.preventDefault();
-          errorMessage = '';
-          if (email.trim() && isValidEmail(email)) {
-            handleNavigateToRsvp(e);
-          } else if (email.trim() && !isValidEmail(email)) {
-            errorMessage = 'Please enter a valid email address';
-          } else {
-            goto('/rsvp');
-          }
-        }}
-        class="pushable"
-        disabled={isSubmitting}
-      >
-        <span class="front font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[128px] text-center text-nowrap tracking-[3.84px] 2xl:tracking-[7.68px] whitespace-pre">
-          RSVP
-        </span>
-      </button>
-      
-      <button 
         on:click={() => goto('/faq')}
         class="pushable-blue"
       >
         <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[128px] text-center text-nowrap tracking-[3.84px] 2xl:tracking-[7.68px] whitespace-pre">
-          Read More
+          FAQ
         </span>
       </button>
     </div>

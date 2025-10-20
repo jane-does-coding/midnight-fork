@@ -5,6 +5,7 @@ import * as path from 'path';
 import mjml2html from 'mjml';
 import { SmimeUtil, SmimeCertificate } from './utils/smime.util';
 import * as forge from 'node-forge';
+import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class AppService {
@@ -13,7 +14,7 @@ export class AppService {
   private smimeUtil: SmimeUtil | null = null;
   private smimeEnabled: boolean = false;
 
-  constructor() {
+  constructor(private prisma: PrismaService) {
     const smtpHost = process.env.SMTP_HOST || `email-smtp.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com`;
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
     const smtpUser = process.env.SMTP_USER || process.env.AWS_SMTP_USER;
@@ -106,11 +107,23 @@ export class AppService {
   }
 
   async sendRsvpEmail(email: string): Promise<{ success: boolean }> {
-    try {
-      const fromEmail = process.env.EMAIL_FROM || 'noreply@midnight.hackclub.com';
-      const from = `Midnight (Hack Club) <${fromEmail}>`;
-      const subject = 'To my dear nibbling...';
+    const fromEmail = process.env.EMAIL_FROM || 'noreply@midnight.hackclub.com';
+    const from = `Midnight (Hack Club) <${fromEmail}>`;
+    const subject = 'To my dear nibbling...';
 
+    const emailJob = await this.prisma.emailJob.create({
+      data: {
+        recipientEmail: email,
+        subject,
+        status: 'pending',
+        metadata: {
+          from: fromEmail,
+          smimeEnabled: this.smimeEnabled,
+        },
+      },
+    });
+
+    try {
       if (this.smimeEnabled && this.smimeUtil) {
         const htmlBoundary = `----=_Part_HTML_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         const signedBoundary = `----=_Part_Signed_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -143,7 +156,7 @@ export class AppService {
         message += `\r\n`;
         message += `--${signedBoundary}--\r\n`;
 
-        await this.transporter.sendMail({
+        const mailResult = await this.transporter.sendMail({
           envelope: {
             from: from,
             to: email,
@@ -152,6 +165,19 @@ export class AppService {
         });
 
         console.log('Successfully sent S/MIME signed email to:', email);
+        
+        await this.prisma.emailJob.update({
+          where: { id: emailJob.id },
+          data: {
+            status: 'sent',
+            sentAt: new Date(),
+            metadata: {
+              from: fromEmail,
+              smimeEnabled: this.smimeEnabled,
+              messageId: mailResult.messageId,
+            },
+          },
+        });
       } else {
         const info = await this.transporter.sendMail({
           from: from,
@@ -161,11 +187,34 @@ export class AppService {
         });
 
         console.log('Successfully sent email via SMTP:', info.messageId);
+        
+        await this.prisma.emailJob.update({
+          where: { id: emailJob.id },
+          data: {
+            status: 'sent',
+            sentAt: new Date(),
+            metadata: {
+              from: fromEmail,
+              smimeEnabled: this.smimeEnabled,
+              messageId: info.messageId,
+            },
+          },
+        });
       }
 
       return { success: true };
     } catch (error) {
       console.error('Error sending email:', error);
+      
+      await this.prisma.emailJob.update({
+        where: { id: emailJob.id },
+        data: {
+          status: 'failed',
+          failedAt: new Date(),
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+
       if (error instanceof HttpException) {
         throw error;
       }
