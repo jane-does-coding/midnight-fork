@@ -127,7 +127,7 @@
       <mj-section padding="0 30px 20px 30px">
         <mj-column>
           <mj-text align="center" font-size="16px" padding="0 20px 16px 0">
-            Refer 2+ friends and get this sticker sheet for free! Be quick, you're the [#nth] to RSVP and we only have 5000 in stock... <br>
+            Refer 2+ friends and get this sticker sheet for free! Be quick, you're the #{{rsvpNumber}} to RSVP and we only have 5000 in stock... <br>
           </mj-text>
           <mj-image src="https://cdn.leafd.dev/midnightsticker.png"
           alt="Midnight Sticker Sheet by RenRan" width="320px" padding="8px 0" />
@@ -148,7 +148,7 @@
       <mj-section padding="10px 10px 10px 10px">
         <mj-column>
           <mj-button 
-            href="https://forms.hackclub.com/midnight-stickers"
+            href="https://lu.ma/midnight"
             background-color="#F24B4B"
             color="#fee1c0"
             font-size="20px"
