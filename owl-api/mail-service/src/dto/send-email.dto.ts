@@ -10,6 +10,10 @@ export class SendEmailDto {
   rsvpNumber?: number;
 
   @IsOptional()
+  @IsNumber()
+  rafflePosition?: number;
+
+  @IsOptional()
   @IsString()
   stickerToken?: string;
 }

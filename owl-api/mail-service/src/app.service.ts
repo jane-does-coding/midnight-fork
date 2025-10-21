@@ -136,24 +136,27 @@ export class AppService {
     return message;
   }
 
-  async sendRsvpEmail(email: string, rsvpNumber?: number, stickerToken?: string): Promise<{ success: boolean }> {
+  async sendRsvpEmail(email: string, rsvpNumber?: number, rafflePosition?: number, stickerToken?: string): Promise<{ success: boolean }> {
     await this.sendImmediateEmail(email, this.emailTemplate, 'To my dear nibbling...', {
       smimeEnabled: this.smimeEnabled,
       type: 'rsvp-confirmation',
     });
 
-    if (stickerToken && rsvpNumber && rsvpNumber <= 5000) {
+    if (stickerToken && rsvpNumber && rsvpNumber <= 5000 && rafflePosition) {
       const scheduledFor = new Date();
       scheduledFor.setMinutes(scheduledFor.getMinutes() + 5);
       
       const stickerUrl = `https://forms.hackclub.com/midnight-stickers?owl_tkn=${stickerToken}`;
+      const referralLink = `https://midnight.hackclub.com/?ref=${rafflePosition}`;
       const emailContent = this.stickerEmailTemplate
         .replace(/{{rsvpNumber}}/g, rsvpNumber.toString())
-        .replace(/{{stickerUrl}}/g, stickerUrl);
+        .replace(/{{stickerUrl}}/g, stickerUrl)
+        .replace(/{{referralLink}}/g, referralLink);
 
       await this.scheduleEmail(email, emailContent, 'Midnight + Free Framework 12 Laptop', scheduledFor, {
         smimeEnabled: this.smimeEnabled,
         rsvpNumber,
+        rafflePosition,
         stickerToken,
         type: 'early-supporter-stickers',
       });

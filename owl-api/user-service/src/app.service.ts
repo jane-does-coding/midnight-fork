@@ -31,7 +31,7 @@ export class AppService {
     return token;
   }
 
-  private async sendRsvpEmailInBackground(email: string): Promise<void> {
+  private async sendRsvpEmailInBackground(email: string, rafflePosition: number): Promise<void> {
     try {
       const rsvpCountData = await this.getRsvpCount();
       const rsvpNumber = rsvpCountData.count;
@@ -67,6 +67,7 @@ export class AppService {
         body: JSON.stringify({ 
           email,
           rsvpNumber,
+          rafflePosition,
           stickerToken,
         }),
       });
@@ -277,7 +278,7 @@ export class AppService {
         const rafflePosition = updateData.fields?.['Loops - MidnightRafflePosition'] || updateData.fields?.fldjbQgoCjCd9fwc5 || 0;
         console.log('Successfully updated RSVP:', existingRecord.id, 'Raffle Position:', rafflePosition);
         
-        this.sendRsvpEmailInBackground(data.email).catch(error => {
+        this.sendRsvpEmailInBackground(data.email, rafflePosition).catch(error => {
           console.error('Background email send failed:', error);
         });
 
@@ -332,7 +333,7 @@ export class AppService {
       const rafflePosition = createData.records[0].fields?.['Loops - MidnightRafflePosition'] || createData.records[0].fields?.fldjbQgoCjCd9fwc5 || 0;
       console.log('Successfully created RSVP:', recordId, 'Raffle Position:', rafflePosition);
       
-      this.sendRsvpEmailInBackground(data.email).catch(error => {
+      this.sendRsvpEmailInBackground(data.email, rafflePosition).catch(error => {
         console.error('Background email send failed:', error);
       });
         
