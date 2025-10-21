@@ -137,24 +137,6 @@
         </mj-column>
       </mj-section>
 
-      <mj-section padding="15px 30px">
-        <mj-column>
-          <mj-button 
-            href="https://forms.hackclub.com/midnight-stickers"
-            background-color="#F24B4B"
-            color="#fee1c0"
-            font-size="20px"
-            font-weight="700"
-            border-radius="8px"
-            padding="12px 40px"
-            align="center"
-  
-          >
-            Claim Them Here!
-          </mj-button>
-        </mj-column>
-      </mj-section>
-
       <mj-section padding="15px 30px 18px 30px">
         <mj-column>
           <mj-text align="center" font-size="15px" padding="0">
