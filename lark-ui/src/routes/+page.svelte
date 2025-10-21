@@ -340,7 +340,7 @@
         
         <form on:submit={handleNavigateToRsvp} class="flex flex-col items-center gap-4 2xl:gap-5 rotate-[-4.25deg]">
           <p class="font-['PT_Serif',_serif] font-bold text-[#fee1c0] text-xs md:text-xl lg:text-2xl xl:text-[28px] 2xl:text-[30px] text-center leading-normal max-w-3xl 2xl:max-w-4xl">
-            Spend 70 hours building personal projects, get a ticket to a hackathon in Vienna, Austria - Jan 2026 
+            Spend 70 hours building personal projects, fly to a <br><span class="text-[#f24b4b]">murder mystery</span> hackathon in Vienna, Austria - Jan 2026 
           </p>
           
           <div class="flex flex-col items-center gap-3 2xl:gap-4 w-full max-w-2xl 2xl:max-w-[52rem]">

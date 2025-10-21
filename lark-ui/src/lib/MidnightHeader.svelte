@@ -18,6 +18,6 @@
 </div>
 
 <div class="absolute top-0 left-0 w-full h-screen min-h-[800px] pointer-events-none overflow-hidden">
-  <img alt="Castle" class="w-full h-full min-h-[800px] object-cover object-top" src="/castle.svg" />
+  <img alt="Castle" class="w-full h-full min-h-[800px] object-cover object-top 2xl:scale-[120%] 2xl:translate-y-[-80px]" src="/castle.svg" />
 </div>
 
