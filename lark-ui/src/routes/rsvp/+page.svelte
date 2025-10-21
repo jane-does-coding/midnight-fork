@@ -11,6 +11,7 @@
   let isSubmitting = false;
   let errorMessage = "";
   let referralCode: string | null = null;
+  let submissionInProgress = false;
 
   let rsvpCount = 0;
   $: maxRsvps = 5000;
@@ -67,6 +68,7 @@
   async function handleSubmit(event: Event) {
     event.preventDefault();
 
+
     if (
       !email.trim() ||
       !firstName.trim() ||
@@ -94,6 +96,7 @@
       return;
     }
 
+    submissionInProgress = true;
     isSubmitting = true;
     errorMessage = "";
 
@@ -122,13 +125,15 @@
 
       const data = await response.json().catch(() => ({}));
 
-      if (response.ok) {
+      if (response.ok && data.success !== false) {
         const rafflePosition = data.rafflePosition || "";
         goto(`/rsvp/success?code=${rafflePosition}`);
       } else {
+        submissionInProgress = false;
         errorMessage = data.error || "Failed to submit RSVP. Please try again.";
       }
     } catch (error) {
+      submissionInProgress = false;
       errorMessage = "Network error. Please try again.";
     } finally {
       isSubmitting = false;
@@ -459,7 +464,7 @@
           {/if}
 
           <div class="flex flex-col items-center w-full gap-[24px]">
-            <button type="submit" class="pushable" disabled={isSubmitting}>
+            <button type="submit" class="pushable" disabled={isSubmitting || submissionInProgress}>
               <span
                 class="front font-['Moga',_sans-serif] text-[#fee1c0] text-[32px] text-center tracking-[1.92px] leading-[normal]"
               >
@@ -656,7 +661,7 @@
         {/if}
 
         <div class="flex flex-col items-center w-full gap-[2vh]">
-          <button type="submit" class="pushable" disabled={isSubmitting}>
+          <button type="submit" class="pushable" disabled={isSubmitting || submissionInProgress}>
             <span
               class="front font-['Moga',_sans-serif] text-[#fee1c0] text-[36px] text-center tracking-[0.06em] leading-[normal]"
             >

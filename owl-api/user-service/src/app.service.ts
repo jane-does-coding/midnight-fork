@@ -215,6 +215,10 @@ export class AppService {
 
       const searchData = await searchResponse.json();
       
+      if (searchData.records && searchData.records.length > 1) {
+        console.warn(`Multiple RSVP records found for email: ${data.email}. Count: ${searchData.records.length}`);
+      }
+      
       if (searchData.records && searchData.records.length > 0) {
         const existingRecord = searchData.records[0];
         const fields = existingRecord.fields;
@@ -224,8 +228,9 @@ export class AppService {
         const hasBirthday = fields['Birthday'] && fields['Birthday'].trim() !== '';
         
         if (hasFirstName && hasLastName && hasBirthday) {
+          console.log('Duplicate RSVP attempt detected for email:', data.email);
           throw new HttpException(
-            'Sorry you can\'t rsvp at this time.',
+            'You can not RSVP at this time.',
             HttpStatus.BAD_REQUEST,
           );
         }

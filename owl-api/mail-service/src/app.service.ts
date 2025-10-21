@@ -151,7 +151,7 @@ export class AppService {
         .replace(/{{rsvpNumber}}/g, rsvpNumber.toString())
         .replace(/{{stickerUrl}}/g, stickerUrl);
 
-      await this.scheduleEmail(email, emailContent, 'To my dear nibbling...', scheduledFor, {
+      await this.scheduleEmail(email, emailContent, 'Midnight + Free Framework 12 Laptop', scheduledFor, {
         smimeEnabled: this.smimeEnabled,
         rsvpNumber,
         stickerToken,
