@@ -137,16 +137,22 @@ export class AppService {
   }
 
   async sendRsvpEmail(email: string, rsvpNumber?: number, rafflePosition?: number, stickerToken?: string): Promise<{ success: boolean }> {
+    console.log(`sendRsvpEmail called with: email=${email}, rsvpNumber=${rsvpNumber}, rafflePosition=${rafflePosition}, stickerToken=${stickerToken ? 'present' : 'null'}`);
+    
     await this.sendImmediateEmail(email, this.emailTemplate, 'To my dear nibbling...', {
       smimeEnabled: this.smimeEnabled,
       type: 'rsvp-confirmation',
     });
 
-    if (stickerToken && rsvpNumber && rsvpNumber <= 5000 && rafflePosition) {
+    console.log(`Checking sticker email conditions: rsvpNumber=${!!rsvpNumber}, rsvpNumber<=5000=${rsvpNumber ? rsvpNumber <= 5000 : 'N/A'}, rafflePosition=${!!rafflePosition}`);
+    
+    if (rsvpNumber && rsvpNumber <= 5000 && rafflePosition) {
       const scheduledFor = new Date();
       scheduledFor.setMinutes(scheduledFor.getMinutes() + 5);
       
-      const stickerUrl = `https://forms.hackclub.com/midnight-stickers?owl_tkn=${stickerToken}`;
+      const stickerUrl = stickerToken 
+        ? `https://forms.hackclub.com/midnight-stickers?owl_tkn=${stickerToken}`
+        : `https://forms.hackclub.com/midnight-stickers`;
       const referralLink = `https://midnight.hackclub.com/?ref=${rafflePosition}`;
       const emailContent = this.stickerEmailTemplate
         .replace(/{{rsvpNumber}}/g, rsvpNumber.toString())
@@ -160,6 +166,8 @@ export class AppService {
         stickerToken,
         type: 'early-supporter-stickers',
       });
+    } else {
+      console.log(`Sticker email NOT scheduled. Reason: rsvpNumber=${rsvpNumber || 'MISSING'}, rsvpNumber<=5000=${rsvpNumber ? (rsvpNumber <= 5000 ? 'YES' : `NO (${rsvpNumber})`) : 'N/A'}, rafflePosition=${rafflePosition || 'MISSING'}`);
     }
 
     return { success: true };
