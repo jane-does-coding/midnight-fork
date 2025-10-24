@@ -8,6 +8,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  userId           String   @id @default(dbgenerated("'usr_' || substr(md5(random()::text), 1, 16)")) @map("user_id")
+  email            String   @unique
+  username         String   @unique
+  name             String
+  birthday         DateTime @db.Date
+  role             String   @default("user")
+  onboardComplete  Boolean  @default(false) @map("onboard_complete")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  projects  Project[]
+  sessions  UserSession[]
+
+  @@map("users")
+}
+
+model Project {
+  projectId   String   @id @default(dbgenerated("'pjr_' || substr(md5(random()::text), 1, 16)")) @map("project_id")
+  userId      String   @map("user_id")
+  projectName String   @map("project_name")
+  projectType String   @map("project_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  user        User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  submissions Submission[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Submission {
+  submissionId String   @id @default(dbgenerated("'sub_' || substr(md5(random()::text), 1, 16)")) @map("submission_id")
+  projectId    String   @map("project_id")
+  playableUrl  String?  @map("playable_url")
+  imageUrl     String?  @map("image_url")
+  description  String?
+  repoUrl      String?  @map("repo_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  project      Project @relation(fields: [projectId], references: [projectId], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("submissions")
+}
+
+model UserSession {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  otpCode     String    @map("otp_code")
+  otpExpiresAt DateTime @map("otp_expires_at")
+  isVerified  Boolean   @default(false) @map("is_verified")
+  verifiedAt  DateTime? @map("verified_at")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  user        User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([otpCode])
+  @@map("user_sessions")
+}
+
 model EmailJob {
   id          String   @id @default(uuid())
   recipientEmail String

@@ -1,5 +1,5 @@
 packages:
   - 'lark-ui'
-  - 'owl-api/*'
+  - 'owl-api'
   - 'gateway'
 
