@@ -307,6 +307,14 @@ async function logout() {
 
 ## Project Management Endpoints
 
+### Project Type Enum
+
+The `projectType` field must be one of the following enum values:
+
+- `personal_website` - For personal website projects
+- `platformer_game` - For platformer game projects  
+- `wildcard` - For any other type of project
+
 ### 8. Create Project
 
 **Endpoint**: `POST /api/projects/auth`
@@ -317,7 +325,7 @@ async function logout() {
 ```typescript
 {
   projectName: string;  // Required
-  projectType: string; // Required
+  projectType: 'personal_website' | 'platformer_game' | 'wildcard'; // Required - enum value
 }
 ```
 
@@ -328,7 +336,7 @@ async function logout() {
   projectId: string;
   userId: string;
   projectName: string;
-  projectType: string;
+  projectType: 'personal_website' | 'platformer_game' | 'wildcard';
   createdAt: Date;
   updatedAt: Date;
   user: {
@@ -370,7 +378,7 @@ async function createProject() {
     projectId: string;
     userId: string;
     projectName: string;
-    projectType: string;
+    projectType: 'personal_website' | 'platformer_game' | 'wildcard';
     createdAt: Date;
     updatedAt: Date;
     submissions: [
@@ -407,7 +415,7 @@ async function createProject() {
   projectId: string;
   userId: string;
   projectName: string;
-  projectType: string;
+  projectType: 'personal_website' | 'platformer_game' | 'wildcard';
   createdAt: Date;
   updatedAt: Date;
   user: {

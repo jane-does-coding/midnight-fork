@@ -13,12 +13,15 @@ CREATE TABLE "users" (
     CONSTRAINT "users_pkey" PRIMARY KEY ("user_id")
 );
 
+-- CreateEnum
+CREATE TYPE "ProjectType" AS ENUM ('personal_website', 'platformer_game', 'wildcard');
+
 -- CreateTable
 CREATE TABLE "projects" (
     "project_id" TEXT NOT NULL DEFAULT ('pjr_' || substr(md5(random()::text), 1, 16)),
     "user_id" TEXT NOT NULL,
-    "project_name" VARCHAR(255) NOT NULL,
-    "project_type" VARCHAR(100) NOT NULL,
+    "project_name" VARCHAR(30) NOT NULL,
+    "project_type" "ProjectType" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -31,7 +34,7 @@ CREATE TABLE "submissions" (
     "project_id" TEXT NOT NULL,
     "playable_url" TEXT,
     "image_url" TEXT,
-    "description" TEXT,
+    "description" VARCHAR(500),
     "repo_url" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

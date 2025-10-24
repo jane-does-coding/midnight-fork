@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUrl, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsUrl, IsNotEmpty, MaxLength } from 'class-validator';
 
 export class CreateSubmissionDto {
   @IsString()
@@ -15,6 +15,7 @@ export class CreateSubmissionDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   description?: string;
 
   @IsOptional()
