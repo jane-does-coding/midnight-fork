@@ -15,6 +15,7 @@ const MAIL_SERVICE_URL = process.env.MAIL_SERVICE_URL || 'http://localhost:3002'
 const UI_SERVICE_URL = process.env.UI_SERVICE_URL || 'http://localhost:5173';
 
 app.use(cors());
+app.use(express.json());
 
 const createServiceProxy = (serviceName: string, targetUrl: string) => {
   return createProxyMiddleware({
@@ -55,7 +56,7 @@ const createServiceProxy = (serviceName: string, targetUrl: string) => {
   });
 };
 
-app.use('/api/user', express.json(), createServiceProxy('user', USER_SERVICE_URL));
+app.use('/api/user', createServiceProxy('user', USER_SERVICE_URL));
 
 app.use('/', createProxyMiddleware({
   target: UI_SERVICE_URL,

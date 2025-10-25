@@ -6,6 +6,7 @@
   let email = "";
   let errorMessage = "";
   let showModal = false;
+  let isSubmitting = false;
 
   function isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,6 +16,10 @@
   async function requestOTP(event: Event) {
     event.preventDefault();
     errorMessage = "";
+
+    if (isSubmitting) {
+      return;
+    }
 
     if (!email.trim()) {
       goto('/rsvp');
@@ -26,25 +31,31 @@
       return;
     }
 
-    // send an otp to the user's email
-    const apiUrl = env.PUBLIC_API_URL || "";
+    isSubmitting = true;
 
-    const response = await fetch(`${apiUrl}/api/user/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email }),
-    });
+    try {
+      // send an otp to the user's email
+      const apiUrl = env.PUBLIC_API_URL || "";
 
-    console.log("sent an OTP");
+      const response = await fetch(`${apiUrl}/api/user/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email }),
+      });
 
-    if (!response || !response.ok) {
-      const data = await response.json();
-      errorMessage = data.message || "Failed to send OTP. Please try again.";
-      return;
-    } 
-    
-    goto("/login?email=" + encodeURIComponent(email));
+      console.log("sent an OTP");
+
+      if (!response || !response.ok) {
+        const data = await response.json();
+        errorMessage = data.message || "Failed to send OTP. Please try again.";
+        return;
+      } 
+      
+      goto("/login?email=" + encodeURIComponent(email));
+    } finally {
+      isSubmitting = false;
+    }
   }
 
   // async function handleNavigateToRsvp(event: Event) {
@@ -417,11 +428,15 @@
                 class="w-full md:flex-1 h-[60px] md:h-[66px] lg:h-[72px] 2xl:h-[78px] px-6 2xl:px-8 rounded-[18px] 2xl:rounded-[22px] bg-[#fee1c0] font-['PT_Sans',_sans-serif] text-[rgba(0,0,0,0.7)] text-xl md:text-2xl lg:text-[32px] 2xl:text-[36px] focus:outline-none focus:ring-2 focus:ring-[#fee1c0] focus:ring-opacity-50"
               />
 
-              <button type="submit" class="pushable flex-shrink-0">
+              <button type="submit" class="pushable flex-shrink-0" disabled={isSubmitting}>
                 <span
                   class="front font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[64px] text-center text-nowrap tracking-[3.84px] whitespace-pre"
                 >
-                  SEND OTP
+                  {#if isSubmitting}
+                    SENDING...
+                  {:else}
+                    SEND OTP
+                  {/if}
                 </span>
               </button>
             </div>

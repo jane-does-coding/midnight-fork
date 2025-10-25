@@ -5,7 +5,8 @@ import { env } from '$env/dynamic/public';
 const apiUrl = env.PUBLIC_API_URL || "";
 
 async function verifyOtp(email: string, otp: string, fetchFn: typeof fetch) {
-  return await fetchFn(`${apiUrl}/api/user/auth/verify-otp`, {
+  const fullUrl = apiUrl ? `${apiUrl}/api/user/auth/verify-otp` : 'http://localhost:3000/api/user/auth/verify-otp';
+  return await fetchFn(fullUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
