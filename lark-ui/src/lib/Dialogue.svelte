@@ -2,6 +2,7 @@
   export let speaker: string = 'MURDOCK';
   export let text: string = "Greetings. I'm Murdock. Your aunt's butler. She demanded I guide you through this process.";
   export let nextFn: () => void = () => {};
+  export let visible: boolean = true;
 </script>
 
 <svelte:head>
@@ -15,7 +16,7 @@
   </style>
 </svelte:head>
 
-<div class="dialogue-container">
+<div class="dialogue-container" style="opacity: {visible ? 1 : 0};">
   <div class="dialogue-box">
     <div class="speaker-label">
       <p class="speaker-name">{speaker}</p>

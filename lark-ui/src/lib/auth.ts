@@ -14,13 +14,27 @@ export async function checkAuthStatus() {
         email: string;
         firstName: string;
         lastName: string;
-        birthday: Date;
+        birthday: string;
         role: string;
         onboardComplete: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        createdAt: string;
+        updatedAt: string;
     };
   } else {
     return null;
   }
+}
+
+async function updateUser() {
+  const response = await fetch(`${apiUrl}/api/user`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      firstName: 'Jane',
+      lastName: 'Smith',
+      birthday: '1995-06-15',
+      city: 'San Francisco'
+    })
+  });
 }
