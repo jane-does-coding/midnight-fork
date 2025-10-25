@@ -68,7 +68,6 @@
   async function handleSubmit(event: Event) {
     event.preventDefault();
 
-
     if (
       !email.trim() ||
       !firstName.trim() ||

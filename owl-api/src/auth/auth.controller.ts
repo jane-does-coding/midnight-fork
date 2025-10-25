@@ -69,6 +69,12 @@ export class AuthController {
     return this.authService.getCurrentUser(req.cookies.sessionId);
   }
 
+  @Post('verify-session')
+  async verifySession(@Body() body: { sessionId: string }) {
+    const sessionId = body.sessionId;
+    return this.authService.getCurrentUser(sessionId);
+  }
+
   @Post('logout')
   @UseGuards(AuthGuard)
   async logout(@Res({ passthrough: true }) res: Response) {

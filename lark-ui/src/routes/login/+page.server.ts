@@ -38,11 +38,11 @@ export const actions = {
             cookies.set('email', email as string, { path: '/', expires: new Date(Date.now() + 600000) }); // 10 min
 
             if (responseData.isNewUser) {
-                return redirect(302, '/onboarding');
+                return redirect(302, '/app/onboarding');
 
                 // --> step 4
             } else {
-                return redirect(302, '/home');
+                return redirect(302, '/app/home');
             }
 
         } else {
