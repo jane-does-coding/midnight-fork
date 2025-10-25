@@ -125,4 +125,20 @@ export class UserController {
     const userId = req.user.userId;
     return this.userService.updateUser(userId, updateUserDto);
   }
+
+  @Get('api/user/hackatime-projects')
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  async getHackatimeProjects(@Req() req: express.Request) {
+    const userEmail = req.user.email;
+    return this.userService.getHackatimeProjects(userEmail);
+  }
+
+  @Get('api/user/hackatime-account')
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  async checkHackatimeAccount(@Req() req: express.Request) {
+    const userEmail = req.user.email;
+    return this.userService.checkHackatimeAccountStatus(userEmail);
+  }
 }

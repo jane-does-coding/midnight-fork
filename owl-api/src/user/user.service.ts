@@ -602,4 +602,81 @@ export class UserService {
   getHealth() {
     return { status: 'ok', service: 'user-service' };
   }
+
+  async checkHackatimeAccountStatus(userEmail: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+      select: {
+        email: true,
+        hackatimeAccount: true,
+      },
+    });
+
+    if (!user) {
+      throw new HttpException(
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return {
+      email: user.email,
+      hasHackatimeAccount: !!user.hackatimeAccount,
+      hackatimeAccountId: user.hackatimeAccount || null,
+    };
+  }
+
+  async getHackatimeProjects(userEmail: string): Promise<any> {
+    const HACKATIME_ADMIN_API_URL = process.env.HACKATIME_ADMIN_API_URL || 'https://hackatime.hackclub.com/api/admin/v1';
+    const HACKATIME_API_KEY = process.env.HACKATIME_API_KEY;
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+
+    if (!user) {
+      throw new HttpException(
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (!user.hackatimeAccount) {
+      throw new HttpException(
+        'No Hackatime account linked to this user',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (HACKATIME_API_KEY) {
+      headers['Authorization'] = `Bearer ${HACKATIME_API_KEY}`;
+    }
+
+    const res = await fetch(
+      `${HACKATIME_ADMIN_API_URL}/user/projects?id=${user.hackatimeAccount}`,
+      {
+        method: 'GET',
+        headers,
+      },
+    );
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new HttpException(
+          'Hackatime projects not found for this user',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      throw new HttpException(
+        'Failed to fetch hackatime projects',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return res.json();
+  }
 }

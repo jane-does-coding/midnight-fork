@@ -96,4 +96,18 @@ export class AuthController {
     const userId = req.user.userId;
     return this.authService.getOnboardingStatus(userId);
   }
+
+  @Post('hackatime-link/send-otp')
+  @UseGuards(AuthGuard)
+  async sendHackatimeLinkOtp(@Req() req: Request, @Body() body: { email: string }) {
+    const userId = req.user.userId;
+    return this.authService.sendHackatimeLinkOtp(userId, body.email);
+  }
+
+  @Post('hackatime-link/verify-otp')
+  @UseGuards(AuthGuard)
+  async verifyHackatimeLinkOtp(@Req() req: Request, @Body() body: { otp: string }) {
+    const userId = req.user.userId;
+    return this.authService.verifyHackatimeLinkOtp(userId, body.otp);
+  }
 }

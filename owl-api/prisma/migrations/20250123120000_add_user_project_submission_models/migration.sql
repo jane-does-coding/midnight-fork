@@ -15,6 +15,7 @@ CREATE TABLE "users" (
     "country" VARCHAR(255),
     "zip_code" VARCHAR(255),
     "airtable_rec_id" VARCHAR(255),
+    "hackatime_account" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
