@@ -117,6 +117,7 @@ export class AuthService {
 
       return {
         message: 'OTP verified successfully',
+        isNewUser: !existingUser.onboardComplete,
         user: {
           userId: existingUser.userId,
           email: existingUser.email,

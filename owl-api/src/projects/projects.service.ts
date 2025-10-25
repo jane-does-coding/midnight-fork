@@ -14,6 +14,7 @@ export class ProjectsService {
         userId,
         projectTitle: createProjectDto.projectTitle,
         projectType: createProjectDto.projectType,
+        description: createProjectDto.projectDescription,
       },
       include: {
         user: {

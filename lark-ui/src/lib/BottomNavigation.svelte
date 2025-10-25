@@ -35,7 +35,6 @@
 
 <div class="bottom-navigation">
   <div class="create-container">
-    <img src="/createpop.svg" alt="Create dialogue bubble" class="create-bubble" />
     <button 
       class="nav-item" 
       class:active={activeTab === 'create'}

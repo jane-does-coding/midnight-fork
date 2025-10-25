@@ -10,8 +10,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:3002';
-const MAIL_SERVICE_URL = process.env.MAIL_SERVICE_URL || 'http://localhost:3002';
+const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost:3002';
 const UI_SERVICE_URL = process.env.UI_SERVICE_URL || 'http://localhost:5173';
 
 app.use(cors());
@@ -56,7 +55,7 @@ const createServiceProxy = (serviceName: string, targetUrl: string) => {
   });
 };
 
-app.use('/api/user', createServiceProxy('user', USER_SERVICE_URL));
+app.use('/api', express.json(), createServiceProxy('unified', SERVICE_URL));
 
 app.use('/', createProxyMiddleware({
   target: UI_SERVICE_URL,
@@ -75,7 +74,6 @@ app.use('/', createProxyMiddleware({
 app.listen(PORT, () => {
   console.log(`🌙 Gateway ready at http://localhost:${PORT}`);
   console.log(`   /           → UI (${UI_SERVICE_URL})`);
-  console.log(`   /api/* → Unified Service (${USER_SERVICE_URL})`);
-  console.log(`   Mail Service (${MAIL_SERVICE_URL}) - Internal only`);
+  console.log(`   /api/* → Unified Service (${SERVICE_URL})`);
 });
 

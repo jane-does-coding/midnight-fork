@@ -6,35 +6,91 @@ export async function checkAuthStatus() {
   const response = await fetch(`${apiUrl}/api/user/auth/me`, {
     credentials: 'include'
   });
-  
+
   if (response.ok) {
     const userData = await response.json();
     return userData as {
-        userId: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-        birthday: string;
-        role: string;
-        onboardComplete: boolean;
-        createdAt: string;
-        updatedAt: string;
+      userId: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      birthday: string;
+      role: string;
+      onboardComplete: boolean;
+      createdAt: string;
+      updatedAt: string;
     };
   } else {
     return null;
   }
 }
 
-async function updateUser() {
-  const response = await fetch(`${apiUrl}/api/user`, {
+export async function updateUser(data: {
+  firstName: string;
+  lastName: string;
+  birthday: string;
+}) {
+  return await fetch(`${apiUrl}/api/user`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify({
-      firstName: 'Jane',
-      lastName: 'Smith',
-      birthday: '1995-06-15',
-      city: 'San Francisco'
+      firstName: data.firstName,
+      lastName: data.lastName,
+      birthday: data.birthday,
     })
   });
+}
+
+export async function createProject(data: {
+  projectTitle: string;
+  projectType: string;
+  projectDescription: string;
+}) {
+  return await fetch(`${apiUrl}/api/projects/auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+}
+
+export type Project = {
+  projectId: string;
+  userId: string;
+  projectTitle: string;
+  projectType: 'personal_website' | 'platformer_game' | 'wildcard';
+  projectDescription: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export async function getProjects() {
+  const response = await fetch(`${apiUrl}/api/projects/auth`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const projects = await response.json();
+    return projects as Project[];
+  } else {
+    return [];
+  }
+}
+
+export async function getProject(id: string) {
+  const response = await fetch(`${apiUrl}/api/projects/auth/${id}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const project = await response.json();
+    return project as Project;
+  } else {
+    return null;
+  }
 }

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { goto } from '$app/navigation';
-  import { checkAuthStatus } from '$lib/auth';
-  import Dialogue from '$lib/Dialogue.svelte';
-    import Texture from '$lib/Texture.svelte';
+  import { goto } from '$app/navigation';
+  import { checkAuthStatus, updateUser } from '$lib/auth';
+  import Dialogue from '$lib/onboarding/Dialogue.svelte';
+  import ProjectTypeSelect from '$lib/onboarding/ProjectTypeSelect.svelte';
+  import Texture from '$lib/Texture.svelte';
   import { onMount } from 'svelte';
   
   const dialogues = [
@@ -17,13 +18,13 @@
     'Build a personal website, platformer game, or anything you want. Here’s a holographic sticker for your efforts.'
   ]
 
-
-  let step = $state(0);
+  let step = $state(-1);
   let missingInfo = $state(false);
 
   let dialogueText = $state(dialogues[0]);
   let visible = $state(true);
   let formVisible = $state(false);
+  let projectTypeVisible = $state(false);
   
   let firstName = $state('');
   let lastName = $state('');
@@ -32,7 +33,14 @@
   
   async function handleSubmit() {
     // Submit form data
-    console.log({ firstName, lastName, email, birthday });
+    console.log({ firstName, lastName, birthday });
+
+    await updateUser({
+      firstName: firstName,
+      lastName: lastName,
+      birthday: birthday,
+    });
+
     missingInfo = false;
     nextStep();
   }
@@ -40,18 +48,25 @@
   function nextStep() {
     step++;
 
-    if (step == 1 && !missingInfo) {
-      step = 4;
-    } else {
-      formVisible = true;
+    if (step == 1) {
+      if (missingInfo) {
+        formVisible = true;
+      } else {
+        step = 4;
+        formVisible = false;
+      }
     }
-
     if (step == 3) {
       visible = false;
     }
 
     if (step == 4) {
       formVisible = false;
+      visible = true;
+    }
+
+    if (step == 8) {
+      projectTypeVisible = true;
     }
 
     if (step >= dialogues.length) {
@@ -69,7 +84,7 @@
       goto('/');
       return;
     } else if (authStatus.onboardComplete) {
-      goto('/app/home');
+      goto('/app/projects');
       return;
     }
 
@@ -171,6 +186,10 @@
         </div>
       </form>
     </div>
+  {/if}
+
+  {#if projectTypeVisible}
+    <ProjectTypeSelect />
   {/if}
 
   <Dialogue
