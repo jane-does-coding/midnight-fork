@@ -3,8 +3,12 @@
   import MidnightHeader from "$lib/MidnightHeader.svelte";
   import { env } from "$env/dynamic/public";
   import { onMount } from "svelte";
+  import type { PageData } from "../$types";
+  import type { ActionData } from "./$types";
 
-  let email = "";
+  let { data, form }: { data: PageData, form: ActionData } = $props();
+
+  let email = $state("");
 
   let message = "";
 
@@ -21,19 +25,8 @@
       email = emailParam;
     }
 
-    // send an otp to the user's email
-    const response = await fetch(`${apiUrl}/api/user/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-
-    console.log('sent an OTP')
-
-    if (!response || !response.ok) {
-      const data = await response.json();
-      message = data.message || "Failed to send OTP. Please try again.";
+    if (form) {
+      email = form.email;
     }
   });
 
@@ -509,12 +502,13 @@
           <input
             type="hidden"
             name="email"
-            value={email}
+            bind:value={email}
           />
           <input
             id="passcode"
             type="text"
             required
+            name="otp"
             autocomplete="one-time-code"
             class="w-full h-[clamp(48px,_4vh,_72px)] px-[1vw] py-[1vh] rounded-[0.6vw] bg-[#fffbf6] font-['PT_Sans',_sans-serif] text-[24px] text-black text-center leading-[1.2] focus:outline-none focus:ring-2 focus:ring-black border-0"
             disabled={isSubmitting}
