@@ -389,6 +389,115 @@
     </div>
   </section>
 
+ <!-- Read More Section Start -->
+  <section
+    class="relative flex justify-center items-center bg-[#443B61]  text-white py-16 px-4 sm:px-8"
+  >
+    <div class="flex flex-col gap-y-[1vw]">
+
+      <div class="flex items-center justify-center w-[80vw] gap-x-[1vw]">
+
+        <div class="flex flex-col w-full gap-y-[1vw] pb-[2vh]">
+          <div class="bg-[#fee1c0]/0 rounded-xl w-full px-[2vw] py-[1vh]">
+            <p class="font-['Moga',_serif] font-bold text-[#fee1c0] text-center text-[8vh] tracking-[3.84px]">How it works</p>
+          </div>
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3.5vh]">Work on projects</p>
+          </div>
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3.5vh]">Collect your hours</p>
+          </div>
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3.5vh]">Fly to Vienna, Austria</p>
+          </div>
+           <button 
+              on:click={openModal}
+              type="button"
+              class="pushable-blue"
+            >
+              <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-[6vh] text-center text-nowrap tracking-[3.84px] whitespace-pre">
+                Read More
+              </span>
+            </button>
+         
+        </div>
+        
+        <img
+        alt="The Hack Club Midnight Team"
+        src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ada8a0621f0f84c5059b856cdea1bc1ab3e4bf0_group_photo.png"
+        class="rounded-xl mt-6 w-[37.5vw] object-cover"
+        />
+
+      </div>
+
+      <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
+        <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3.5vh] text-center">Build new projects, and learn with other highschoolers</p>
+      </div>
+
+      <div class="w-[80vw] flex gap-[1vw]">
+        <div class="w-2/10 bg-[#fee1c0] rounded-xl flex items-center justify-center p-[2vw]">
+          <img alt="Midnight - A Murder Mystery" class="w-full h-auto block" style="object-fit: contain; background-repeat: no-repeat; background-size: contain;" src="/sad.png" />
+        </div>
+
+        <div class="bg-[#f24b4b] w-8/10 rounded-xl px-[2vw] py-[2.5vh] flex items-center justify-center text-left">
+          <p class="text-[#fee1c0] font-['PT_Serif',_serif] font-bold text-[2.75vh]"> Hack Club Midnight is a two-month online-to-in-person hackathon in Vienna, bringing hackers together to build creative projects, connect through events, and experience a unique murder-mystery themed adventure.
+          </p>
+        </div>
+      </div>
+    
+  
+    </div>
+  </section>
+    <!-- Read More Section End -->
+
+    <!-- Read More Option 2 Section Start -->
+   <!--  <section class="w-full bg-[#f24b4b] h-[70vh] flex items-center justify-between px-[10vw] gap-[1vw] relative">
+      <div class="absolute w-full h-[10vh] rounded-[100%] top-[-5vh] bg-[#443B61] left-0"></div>
+      <div class="flex flex-col gap-[2vh]">
+
+        <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
+          <p class="text-[#443B61] font-['PT_Serif',_serif] font-bold text-[2.5vh]"> Hack Club Midnight is a two-month online-to-in-person hackathon in Vienna, bringing hackers together to build creative projects, connect through events, and experience a unique murder-mystery themed adventure.
+          </p>
+        </div>
+
+         <button 
+              on:click={openModal}
+              type="button"
+              class="pushable-blue"
+            >
+              <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-[6vh] text-center text-nowrap tracking-[3.84px] whitespace-pre">
+                Read More
+              </span>
+        </button>
+
+        <div class="flex gap-[1vw] items-center justify-center">
+
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Code</p>
+          </div>
+
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Submit</p>
+          </div>
+
+          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
+            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Repeat</p>
+          </div>
+        </div>
+        
+      </div>   
+
+      <img
+        alt="The Hack Club Midnight Team"
+        src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ada8a0621f0f84c5059b856cdea1bc1ab3e4bf0_group_photo.png"
+        class="rounded-xl mt-6 w-[35vw] object-cover"
+        />
+        
+        <div class="absolute w-full h-[10vh] rounded-[100%] bottom-[-5vh] bg-[#443B61] left-0"></div>
+    </section> -->
+    <!-- Read More Option 2 Section End -->
+
+
   <section class="w-full flex flex-col items-center overflow-x-hidden pt-12 md:pt-16">
   <div class="bg-[#2A2746] aspect-video w-[110%] sm:w-[95%] md:w-[85%] lg:w-4/5 p-4 flex items-center justify-center mb-8 relative z-10">
     <iframe width="560" height="315" src="https://www.youtube.com/embed/oKHU66Ar6Gk?si=9kKLARVPPCcyygt-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" class="w-full h-full" allowfullscreen></iframe>
