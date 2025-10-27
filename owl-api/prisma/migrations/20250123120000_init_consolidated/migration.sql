@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS "projects" (
     "project_title" VARCHAR(30) NOT NULL,
     "project_type" "ProjectType" NOT NULL,
     "now_hackatime_hours" DOUBLE PRECISION,
+    "now_hackatime_projects" TEXT[] DEFAULT '{}',
     "approved_hours" DOUBLE PRECISION,
     "description" VARCHAR(500),
     "screenshot_url" TEXT,
