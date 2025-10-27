@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import MidnightHeader from '$lib/MidnightHeader.svelte';
   import { env } from '$env/dynamic/public';
+  import { onMount } from 'svelte';
   
   let email = '';
   let errorMessage = '';
@@ -12,8 +13,34 @@
     return emailRegex.test(email);
   }
 
+
+/* Added the clicking sound to buttons */
+let clickSound: HTMLAudioElement | undefined;
+
+onMount(() => {
+  clickSound = new Audio('/sounds/click.mp3');
+  clickSound.preload = 'auto';
+});
+
+function playClick() {
+  if (!clickSound) return;
+  try {
+    clickSound.currentTime = 0;
+    clickSound.play().catch(() => {});
+  } catch (e) {
+    clickSound.play().catch(() => {});
+  }
+}
+
+  /* Created a helper to add sound to faq button */
+  function navigateToFaq() {
+    playClick();
+    goto('/faq');
+  }
+
   async function handleNavigateToRsvp(event: Event) {
     event.preventDefault();
+    playClick();
     errorMessage = '';
     
     if (!email.trim()) {
@@ -363,7 +390,7 @@
             </div>
             
             <button 
-              on:click={openModal}
+              on:click={() => { playClick(); openModal(); }}
               type="button"
               class="pushable-blue"
             >
@@ -411,7 +438,7 @@
             <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3.5vh]">Fly to Vienna, Austria</p>
           </div>
            <button 
-              on:click={openModal}
+              on:click={() => { playClick(); openModal(); }}
               type="button"
               class="pushable-blue"
             >
@@ -450,54 +477,6 @@
   </section>
     <!-- Read More Section End -->
 
-    <!-- Read More Option 2 Section Start -->
-   <!--  <section class="w-full bg-[#f24b4b] h-[70vh] flex items-center justify-between px-[10vw] gap-[1vw] relative">
-      <div class="absolute w-full h-[10vh] rounded-[100%] top-[-5vh] bg-[#443B61] left-0"></div>
-      <div class="flex flex-col gap-[2vh]">
-
-        <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh]">
-          <p class="text-[#443B61] font-['PT_Serif',_serif] font-bold text-[2.5vh]"> Hack Club Midnight is a two-month online-to-in-person hackathon in Vienna, bringing hackers together to build creative projects, connect through events, and experience a unique murder-mystery themed adventure.
-          </p>
-        </div>
-
-         <button 
-              on:click={openModal}
-              type="button"
-              class="pushable-blue"
-            >
-              <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-[6vh] text-center text-nowrap tracking-[3.84px] whitespace-pre">
-                Read More
-              </span>
-        </button>
-
-        <div class="flex gap-[1vw] items-center justify-center">
-
-          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
-            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Code</p>
-          </div>
-
-          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
-            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Submit</p>
-          </div>
-
-          <div class="bg-[#fee1c0] rounded-xl w-full px-[2vw] py-[1.5vh] flex text-center items-center justify-center">
-            <p class="font-['PT_Serif',_serif] font-bold text-[#443B61] text-[3vh] text-center">Repeat</p>
-          </div>
-        </div>
-        
-      </div>   
-
-      <img
-        alt="The Hack Club Midnight Team"
-        src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ada8a0621f0f84c5059b856cdea1bc1ab3e4bf0_group_photo.png"
-        class="rounded-xl mt-6 w-[35vw] object-cover"
-        />
-        
-        <div class="absolute w-full h-[10vh] rounded-[100%] bottom-[-5vh] bg-[#443B61] left-0"></div>
-    </section> -->
-    <!-- Read More Option 2 Section End -->
-
-
   <section class="w-full flex flex-col items-center overflow-x-hidden pt-12 md:pt-16">
   <div class="bg-[#2A2746] aspect-video w-[110%] sm:w-[95%] md:w-[85%] lg:w-4/5 p-4 flex items-center justify-center mb-8 relative z-10">
     <iframe width="560" height="315" src="https://www.youtube.com/embed/oKHU66Ar6Gk?si=9kKLARVPPCcyygt-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" class="w-full h-full" allowfullscreen></iframe>
@@ -508,7 +487,7 @@
     
     <div class="absolute top-[10%] left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 rotate-[-4.25deg]">
       <button 
-        on:click={() => goto('/faq')}
+        on:click={navigateToFaq}
         class="pushable-blue"
       >
         <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[64px] text-center text-nowrap tracking-[3.84px] whitespace-pre">
