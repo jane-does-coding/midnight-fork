@@ -2,6 +2,8 @@ import { env } from "$env/dynamic/public";
 
 const apiUrl = env.PUBLIC_API_URL || '';
 
+//auth
+
 export type User = {
       userId: string;
       email: string;
@@ -43,6 +45,8 @@ export async function updateUser(data: {
     })
   });
 }
+
+// projects
 
 export type Project = {
   projectId: string;
@@ -100,6 +104,42 @@ export async function getProject(id: string) {
   if (response.ok) {
     const project = await response.json();
     return project as Project;
+  } else {
+    return null;
+  }
+}
+
+//hackatime
+
+export async function checkHackatimeAccount() {
+  const response = await fetch(`${apiUrl}/api/user/hackatime-account`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    return null;
+  }
+}
+
+export async function getHackatimeProjects() {
+  const response = await fetch(`${apiUrl}/api/user/hackatime-projects`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data as {
+      projects: {
+        name: string
+      }[]
+    };
   } else {
     return null;
   }

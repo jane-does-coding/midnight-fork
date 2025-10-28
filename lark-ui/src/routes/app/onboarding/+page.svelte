@@ -20,7 +20,7 @@
     'Build a personal website, platformer game, or anything you want. Here’s a holographic sticker for your efforts.'
   ]
 
-  let step = $state(-1);
+  let step = $state(0);
   let missingInfo = $state(false);
 
   let dialogueText = $state(dialogues[0]);

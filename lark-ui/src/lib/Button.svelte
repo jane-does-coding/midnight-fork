@@ -1,12 +1,13 @@
 <script lang="ts">
-    const { label, disabled, icon = undefined }: {
+    const { label, disabled = false, icon = undefined, onclick = () => {} }: {
         label: string;
-        disabled: boolean;
+        disabled?: boolean;
+        onclick?: () => void;
         icon?: string;
     } = $props();
 </script>
 
-<button class="submit-button" disabled={disabled}>
+<button class="submit-button" disabled={disabled} onclick={onclick}>
     <p>{label}</p>
     {#if icon}
         <img src="/icons/{icon}.svg" alt="icon" />

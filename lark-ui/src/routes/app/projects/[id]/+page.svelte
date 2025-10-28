@@ -6,11 +6,14 @@
   import { getProject } from '$lib/auth';
   import type { Project } from '$lib/auth';
     import Button from '$lib/Button.svelte';
+    import HackatimeModal from '$lib/HackatimeModal.svelte';
   
   let project = $state<Project | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let locked = $state(true);
+
+  let openHackatimeModal = $state(false);
   
   const projectId = $derived($page.params.id);
   
@@ -72,13 +75,17 @@
         </div>
 
           <div class="submit-section">
-            <Button label="LINK HACKATIME" disabled={false} icon="link" />
+            <Button label="LINK HACKATIME" disabled={false} icon="link" onclick={() => openHackatimeModal = true}/>
             <img alt="required!" src="/handdrawn_text/required.png" style="width: 140px;" />
           </div>       
       </div>
     </div>
   {/if}
-  
+
+  {#if openHackatimeModal}
+    <HackatimeModal onClose={() => openHackatimeModal = false} />
+  {/if}
+
   <BottomNavigation />
 </div>
 
@@ -123,7 +130,7 @@
 
   .project-overview {
     display: flex;
-    gap: 47px;
+    gap: 48px;
   }
 
   .project-card-preview {
@@ -175,7 +182,7 @@
 
   .project-description {
     font-family: 'PT Sans', sans-serif;
-    font-size: 16px;
+    font-size: 20px;
     color: white;
     letter-spacing: -0.176px;
     line-height: 1.5;

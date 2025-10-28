@@ -9,12 +9,12 @@
   let projectType = 'website';
   
   $: formConfig = {
-    website: {
+    personal_website: {
       title: 'CREATE YOUR WEBSITE',
       namePlaceholder: 'Website Name',
       descriptionPlaceholder: 'Website Description'
     },
-    game: {
+    platformer_game: {
       title: 'CREATE YOUR GAME',
       namePlaceholder: 'Game Name',
       descriptionPlaceholder: 'Game Description'

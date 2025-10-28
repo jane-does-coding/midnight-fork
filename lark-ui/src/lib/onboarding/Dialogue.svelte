@@ -5,15 +5,34 @@
   export let visible: boolean = true;
 </script>
 
+<svelte:head>
+  <style>
+    @font-face {
+      font-family: 'PT Sans';
+      src: url('/font/PTSans-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'PT Sans';
+      src: url('/font/PTSans-Bold.ttf') format('truetype');
+      font-weight: bold;
+      font-style: normal;
+    }
+  </style>
+</svelte:head>
+
 <div class="dialogue-container" style="opacity: {visible ? 1 : 0};">
   <div class="dialogue-box">
     <div class="speaker-label">
+      <img src="/speaker-label-bg.svg" alt="" class="label-bg" />
       <p class="speaker-name">{speaker}</p>
     </div>
-    <div class="dialogue-text">
-      <p>{text}</p>
+    <div class="dialogue-content">
+      <p class="dialogue-text">{text}</p>
+      <p class="continue-hint">Click to continue.</p>
     </div>
-    <button class="next-button" on:click={nextFn} style="display: {visible ? '' : 'none'};">Next</button>
+    <button class="click-overlay" onclick={nextFn} aria-label="Continue"></button>
   </div>
 </div>
 
@@ -23,8 +42,7 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 198px;
-
+    height: 200px;
     z-index: 100;
   }
 
@@ -33,106 +51,131 @@
     width: 100%;
     height: 100%;
     background: #1c1c1c;
-    border: 2px solid white;
+    cursor: pointer;
   }
 
   .speaker-label {
     position: absolute;
-    top: -44px;
-    left: 51px;
-    width: 351px;
-    height: 84px;
-    background: #1c1c1c;
-    border: 2px solid white;
-    border-radius: 10px;
+    top: -50px;
+    left: 30px;
+    width: 240px;
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
+  .label-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
   .speaker-name {
+    position: relative;
+    z-index: 1;
     font-family: 'PT Sans', sans-serif;
     font-weight: bold;
-    font-size: 50px;
+    font-size: 40px;
     color: white;
     text-align: center;
     letter-spacing: -0.55px;
     margin: 0;
+    line-height: normal;
+
+    translate: 0 2px;
+  }
+
+  .dialogue-content {
+    padding: 40px 94px 30px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .dialogue-text {
-    padding: 20px 50px;
-    display: flex;
-    align-items: center;
-    height: 100%;
-  }
-
-  .dialogue-text p {
     font-family: 'PT Sans', sans-serif;
     font-size: 32px;
     color: white;
-    line-height: 1.4;
+    letter-spacing: -0.352px;
+    line-height: normal;
     margin: 0;
   }
 
-  .next-button {
-    position: absolute;
-    top: -28px;
-    right: 51px;
-    width: 151px;
-    height: 60px;
-    background: #F24B4B;
-    border: 2px solid white;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
-    color: white;
+  .continue-hint {
     font-family: 'PT Sans', sans-serif;
-    font-weight: bold;
-    font-size: 32px;
+    font-size: 20px;
+    color: #acacac;
+    letter-spacing: -0.22px;
+    line-height: normal;
+    margin: 0;
+    max-width: 1181px;
+  }
+
+  .click-overlay {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1;
   }
 
   @media (max-width: 768px) {
-    .speaker-name {
-      font-size: 32px;
+    .dialogue-container {
+      height: 160px;
     }
-    
+
     .speaker-label {
-      width: 250px;
+      width: 200px;
       height: 60px;
-      top: -32px;
+      top: -42px;
       left: 30px;
     }
+
+    .speaker-name {
+      font-size: 36px;
+    }
     
-    .dialogue-text p {
-      font-size: 20px;
-      padding: 10px 30px;
+    .dialogue-content {
+      padding: 25px 40px 25px 40px;
+    }
+    
+    .dialogue-text {
+      font-size: 24px;
+    }
+
+    .continue-hint {
+      font-size: 16px;
     }
   }
 
   @media (max-width: 480px) {
-    .speaker-name {
-      font-size: 24px;
-    }
-    
-    .speaker-label {
-      width: 200px;
-      height: 50px;
-      top: -26px;
-      left: 20px;
-    }
-    
-    .dialogue-text p {
-      font-size: 16px;
-      padding: 5px 20px;
+    .dialogue-container {
+      height: 140px;
     }
 
-    .dialogue-container {
-      height: 150px;
+    .speaker-label {
+      width: 150px;
+      height: 50px;
+      top: -38px;
+      left: 20px;
+    }
+
+    .speaker-name {
+      font-size: 28px;
+    }
+    
+    .dialogue-content {
+      padding: 20px 30px;
+    }
+    
+    .dialogue-text {
+      font-size: 18px;
+    }
+
+    .continue-hint {
+      font-size: 14px;
     }
   }
 </style>

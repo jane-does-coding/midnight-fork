@@ -41,7 +41,7 @@
     >
       Explore
       {#if onboarding}
-        <img class="lock" src="/lock-small.svg" alt="Lock" />
+        <img class="lock" src="/icons/lock.svg" alt="Lock" />
       {/if}
     </button>
     <button 
@@ -53,7 +53,7 @@
     >
       Shop
       {#if onboarding}
-        <img class="lock" src="/lock-small.svg" alt="Lock" />
+        <img class="lock" src="/icons/lock.svg" alt="Lock" />
       {/if}
     </button>
   </div>
