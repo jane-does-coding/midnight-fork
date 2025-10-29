@@ -6,7 +6,6 @@
 
     const { onClose }: {
         onClose: () => void;
-        
     } = $props();
 
     let page: number = $state(0);

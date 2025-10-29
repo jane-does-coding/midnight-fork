@@ -1,8 +1,19 @@
 <script lang="ts">
-  export let speaker: string = 'MURDOCK';
-  export let text: string = "Greetings. I'm Murdock. Your aunt's butler. She demanded I guide you through this process.";
-  export let nextFn: () => void = () => {};
-  export let visible: boolean = true;
+  import Butler from "./Butler.svelte";
+
+  const {
+    speaker = 'MURDOCK',
+    text = "Greetings. I'm Murdock. Your aunt's butler. She demanded I guide you through this process.",
+    nextFn = () => {},
+    visible = true,
+    variant = 1
+  }: {
+    speaker?: string;
+    text?: string;
+    nextFn?: () => void;
+    visible?: boolean;
+    variant?: number;
+  } = $props()
 </script>
 
 <svelte:head>
@@ -28,9 +39,14 @@
       <img src="/speaker-label-bg.svg" alt="" class="label-bg" />
       <p class="speaker-name">{speaker}</p>
     </div>
-    <div class="dialogue-content">
-      <p class="dialogue-text">{text}</p>
-      <p class="continue-hint">Click to continue.</p>
+    <div class="content-wrapper">
+      <div class="dialogue-content">
+        <p class="dialogue-text">{text}</p>
+        <p class="continue-hint">Click to continue.</p>
+      </div>
+      <div class="butler">
+        <Butler variant={variant} />
+      </div>
     </div>
     <button class="click-overlay" onclick={nextFn} aria-label="Continue"></button>
   </div>
@@ -42,14 +58,14 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 200px;
+    min-height: 200px;
     z-index: 100;
   }
 
   .dialogue-box {
     position: relative;
     width: 100%;
-    height: 100%;
+    min-height: 200px;
     background: #1c1c1c;
     cursor: pointer;
   }
@@ -63,6 +79,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .content-wrapper {
+    display: flex;
+    align-items: stretch;
+    min-height: 200px;
+    gap: 30px;
+  }
+
+  .butler {
+    flex-shrink: 0;
+    width: max(300px, 25vw);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    translate: 0 24px;
+    padding-right: 30px;
   }
 
   .label-bg {
@@ -87,10 +120,12 @@
   }
 
   .dialogue-content {
-    padding: 40px 94px 30px 50px;
+    flex: 1;
+    padding: 40px 0 30px 50px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    justify-content: center;
   }
 
   .dialogue-text {
@@ -123,7 +158,7 @@
 
   @media (max-width: 768px) {
     .dialogue-container {
-      height: 160px;
+      min-height: 160px;
     }
 
     .speaker-label {
@@ -148,11 +183,15 @@
     .continue-hint {
       font-size: 16px;
     }
+
+    .butler {
+      width: 35vw;
+    }
   }
 
   @media (max-width: 480px) {
     .dialogue-container {
-      height: 140px;
+      min-height: 140px;
     }
 
     .speaker-label {
@@ -165,9 +204,13 @@
     .speaker-name {
       font-size: 28px;
     }
+
+    .content-wrapper {
+      gap: 0;
+    }
     
     .dialogue-content {
-      padding: 20px 30px;
+      padding: 20px 0 20px 20px;
     }
     
     .dialogue-text {

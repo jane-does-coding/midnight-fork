@@ -25,6 +25,7 @@
   let missingInfo = $state(false);
 
   let dialogueText = $state(dialogues[0]);
+  let butlerVariant = $state(1);
 
   let dialogueVisible = $state(true);
   let formVisible = $state(false);
@@ -64,12 +65,17 @@
       case 1:
         if (missingInfo) {
           formVisible = true;
+          butlerVariant = 3;
         } else {
           step = 4;
           formVisible = false;
         }
         break;
       
+      case 2:
+        butlerVariant = 1;
+        break;
+
       case 3:
         dialogueVisible = false;
         overlayVisible = false;
@@ -80,6 +86,7 @@
         dialogueVisible = true;
         calculatorVisible = true;
         overlayVisible = true;
+        butlerVariant = 2;
         break;
   
       case 5:
@@ -87,6 +94,7 @@
         dialogueVisible = true;
         calculatorVisible = true;
         overlayVisible = true;
+        butlerVariant = 3;
         break;
       
       case 6:
@@ -98,10 +106,12 @@
         calculatorVisible = false;
         dialogueVisible = true;
         overlayVisible = true;
+        butlerVariant = 2;
         break;
       
       case 8:
         projectTypeVisible = true;
+        butlerVariant = 1;
         break;
     }
 
@@ -125,8 +135,6 @@
       return;
     }
 
-    console.log(authStatus);
-
     firstName = authStatus.firstName;
     lastName = authStatus.lastName;
     email = authStatus.email;
@@ -134,7 +142,6 @@
 
     if (authStatus.firstName == 'Temporary' || authStatus.lastName == 'User' || !authStatus.email || !authStatus.birthday) {
       missingInfo = true;
-      return;
     }
 
     nextStep();
@@ -147,6 +154,7 @@
     text={dialogueText}
     nextFn={nextStep}
     visible={dialogueVisible}
+    variant={butlerVariant}
   />
 
   <div class="content" style="pointer-events: {overlayVisible ? 'none' : 'auto'};">
