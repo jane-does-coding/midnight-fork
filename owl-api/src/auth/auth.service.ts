@@ -315,6 +315,24 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    const hackatimeAccountId = await this.checkHackatimeAccount(email);
+
+    if (!hackatimeAccountId) {
+      throw new BadRequestException('No Hackatime account found with this email');
+    }
+
+    const linkedUser = await this.prisma.user.findFirst({
+      where: {
+        hackatimeAccount: hackatimeAccountId.toString(),
+        NOT: { userId },
+      },
+      select: { userId: true },
+    });
+
+    if (linkedUser) {
+      throw new BadRequestException('This Hackatime account is already linked to another user');
+    }
+
     const otp = this.generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
