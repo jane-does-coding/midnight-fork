@@ -1,10 +1,10 @@
 <script lang="ts">
   import BottomNavigation from '$lib/BottomNavigation.svelte';
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { checkHackatimeAccount, getProject, linkHackatimeProject } from '$lib/auth';
-  import type { Project } from '$lib/auth';
+  import { checkAuthStatus, checkHackatimeAccount, getProject, linkHackatimeProject } from '$lib/auth';
+  import type { Project, User } from '$lib/auth';
   import Button from '$lib/Button.svelte';
   import HackatimeAccountModal from '$lib/hackatime/HackatimeAccountModal.svelte';
 
@@ -12,12 +12,12 @@
   let error = $state<string | null>(null);
   let locked = $state(true);
 
-  let hasHackatimeAccount = $state(false);
+  let user = $state<User | null>(null);
   let project = $state<Project | null>(null);
 
   let openHackatimeModal = $state(false);
   
-  const projectId = $derived($page.params.id);
+  const projectId = $derived(page.params.id);
   
   async function loadProject() {
     if (!projectId) return;
@@ -43,13 +43,14 @@
   }
   
   onMount(async () => {
-    await loadProject();
+    user = await checkAuthStatus();
 
-    const data = await checkHackatimeAccount();
-
-    if (data && data.hasHackatimeAccount) {
-      hasHackatimeAccount = true;
+    if (!user) {
+      goto('/');
+      return;
     }
+
+    await loadProject();
   });
 </script>
 
@@ -89,13 +90,22 @@
           </p>          
         </div>
 
-        {#if project.nowHackatimeProjects && project.nowHackatimeProjects.length > 0}
-          <div class="submit-section">
-            <Button label="EDIT" icon="edit" color="blue"/>
-          </div>
+        {#if user && user.hackatimeAccount}
+          {#if project.nowHackatimeProjects && project.nowHackatimeProjects.length > 0}
+            <div class="submit-section">
+              <Button label="EDIT" icon="edit" color="blue"/>
+            </div>
+          {:else}
+            <div class="submit-section">
+              <Button label="LINK HACKATIME Project" icon="link" color="blue"/>
+            </div>
+          {/if}
         {:else}
           <div class="submit-section">
-            <Button label="LINK HACKATIME Account" icon="link" onclick={() => openHackatimeModal = true}/>
+            <Button label="LINK HACKATIME Account" icon="link" onclick={async () => { 
+              user = await checkAuthStatus();
+              openHackatimeModal = true 
+            }}/>
             <img alt="required!" src="/handdrawn_text/required.png" style="width: 140px;" />
           </div>
         {/if}       

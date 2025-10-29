@@ -5,15 +5,16 @@ const apiUrl = env.PUBLIC_API_URL || '';
 //auth
 
 export type User = {
-      userId: string;
-      email: string;
-      firstName: string;
-      lastName: string;
-      birthday: string;
-      role: string;
-      onboardComplete: boolean;
-      createdAt: string;
-      updatedAt: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  birthday: string;
+  role: string;
+  onboardComplete: boolean;
+  createdAt: string;
+  updatedAt: string;
+  hackatimeAccount: string | null;
 };
 
 export async function checkAuthStatus() {
