@@ -407,13 +407,13 @@ function playClick() {
     </div>
 
     <!-- Read More button positioned bottom-right -->
-    <div class="absolute bottom-8 right-8 md:bottom-12 md:right-12 lg:bottom-16 lg:right-16">
+    <div class="absolute bottom-0 z-30 right-8 md:bottom-12 md:right-12 lg:bottom-16 lg:right-16">
       <button 
         on:click={() => { playClick(); openModal(); }}
         type="button"
-        class="pushable-blue"
+        class="bg-[#fee1c0] px-[2vw] py-[1vh] rounded-xl cursor-pointer"
       >
-        <span class="front-blue font-['Moga',_sans-serif] text-[#fee1c0] text-3xl md:text-4xl lg:text-5xl xl:text-[64px] 2xl:text-[64px] text-center text-nowrap tracking-[3.84px] whitespace-pre">
+        <span class=" font-['PT_Serif',_sans-serif] text-[#443B61] font-bold text-[2.5vh] text-center text-nowrap whitespace-pre">
           Read More
         </span>
       </button>
