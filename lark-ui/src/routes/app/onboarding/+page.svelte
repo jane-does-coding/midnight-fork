@@ -57,6 +57,8 @@
   async function handleCalc(hours: number) {
     console.log(hours);
 
+    dialogues[7] = `Hmm... ${hours + 40} hours. You can create as many projects as you want to hit this goal.`;
+
     nextStep();
   }
 
