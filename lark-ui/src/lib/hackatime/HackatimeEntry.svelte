@@ -12,23 +12,6 @@
     } = $props();
 </script>
 
-<svelte:head>
-    <style>
-        @font-face {
-            font-family: "Moga";
-            src: url("/font/Moga.ttf") format("truetype");
-            font-weight: normal;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: "PT Sans";
-            src: url("/font/PTSans-Regular.ttf") format("truetype");
-            font-weight: normal;
-            font-style: normal;
-        }
-    </style>
-</svelte:head>
-
 <div class="hackatime-entry" class:empty={variant === "empty"}>
     {#if variant === "empty"}
         <div class="project-details">

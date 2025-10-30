@@ -53,23 +53,6 @@
     });
 </script>
 
-<svelte:head>
-    <style>
-        @font-face {
-            font-family: "Moga";
-            src: url("/font/Moga.ttf") format("truetype");
-            font-weight: normal;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: "PT Sans";
-            src: url("/font/PTSans-Regular.ttf") format("truetype");
-            font-weight: normal;
-            font-style: normal;
-        }
-    </style>
-</svelte:head>
-
 <div class="modal-overlay">
     <div class="modal-box" onclick={(e) => e.stopPropagation()} role="none">
         {#if page == 0}
@@ -201,10 +184,15 @@
                             submitting = true;
                             const result = await sendHackatimeOtp(email);
                             submitting = false;
-                            if (result) {
+                            if (result.ok) {
                                 nextPage();
                             } else {
-                                error = "Failed to send OTP";
+                                try {
+                                    const jsonData = await result.json();
+                                    error = jsonData.error || "Failed to send OTP";
+                                } catch (e) {
+                                    error = "Failed to send OTP";
+                                }
                             }
                         }}></Button>
                     </div>
@@ -227,10 +215,15 @@
                             submitting = true;
                             const result = await verifyHackatimeOtp(otp);
                             submitting = false;
-                            if (result) {
+                            if (result.ok) {
                                 nextPage();
                             } else {
-                                error = "Invalid OTP";
+                                try {
+                                    const jsonData = await result.json();
+                                    error = jsonData.error || "Error verifying OTP";
+                                } catch (e) {
+                                    error = "Error verifying OTP";
+                                }
                             }
                         }}></Button>
                         {#if error}

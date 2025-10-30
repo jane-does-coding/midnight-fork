@@ -183,7 +183,7 @@ export async function sendHackatimeOtp(email: string) {
     body: JSON.stringify({ email })
   });
 
-  return response.ok; 
+  return response;
 }
 
 export async function verifyHackatimeOtp(otp: string) {
@@ -194,5 +194,5 @@ export async function verifyHackatimeOtp(otp: string) {
     body: JSON.stringify({ otp })
   });
 
-  return response.ok;
+  return response;
 }

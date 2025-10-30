@@ -16,23 +16,6 @@
   } = $props()
 </script>
 
-<svelte:head>
-  <style>
-    @font-face {
-      font-family: 'PT Sans';
-      src: url('/font/PTSans-Regular.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'PT Sans';
-      src: url('/font/PTSans-Bold.ttf') format('truetype');
-      font-weight: bold;
-      font-style: normal;
-    }
-  </style>
-</svelte:head>
-
 <div class="dialogue-container" style="pointer-events: {visible ? 'auto' : 'none'}; opacity: {visible ? 1 : 0};">
   <div class="dialogue-box">
     <div class="speaker-label">

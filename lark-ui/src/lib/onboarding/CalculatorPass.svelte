@@ -11,23 +11,6 @@
   }
 </script>
 
-<svelte:head>
-  <style>
-    @font-face {
-      font-family: 'Moga';
-      src: url('/font/Moga.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
-    @font-face {
-      font-family: 'PT Sans';
-      src: url('/font/PTSans-Regular.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
-  </style>
-</svelte:head>
-
 <div class="calculator-wrapper">
   <div class="boarding-pass">
     <h1 class="title">GET your entire flight covered</h1>
