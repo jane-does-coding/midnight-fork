@@ -2,7 +2,7 @@
   import BaseCard from './BaseCard.svelte';
 </script>
 
-<BaseCard color="#2e2740">
+<BaseCard href='/app/projects/select' color="#2e2740">
   {#snippet children()}
     <div class="new-project-content">
       <h2 class="new-project-title">

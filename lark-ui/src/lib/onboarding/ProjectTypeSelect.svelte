@@ -9,119 +9,79 @@
   }
 </script>
 
-<div class="get-started-section">
-  <h1 class="get-started-title">GET STARTED</h1>
-  <p class="subtitle">
-    Build your first project... And get a holographic sticker!
-  </p>
+<div class="create-new-project">
+  <h1 class="title">CREATE NEW PROJECT</h1>
+  <p class="subtitle">Build your first project... And get a holographic sticker!</p>
 
-  <div class="project-cards">
-    <a
-      class="project-card personal-website"
-      role="button"
-      tabindex="0"
-      style="--rot-amt: {randomRot()}deg"
-      href="{createLink('personal_website')}"
-    >
-      <img src="/website.svg" alt="Personal Website" class="card-svg" />
+  <div class="cards-container">
+    <a href="{createLink('personal_website')}" class="card-link" style="--rot-amt: {randomRot()}deg">
+      <img src="/cards/personal_website.svg" alt="Personal Website" class="card-svg" />
     </a>
 
-    <a
-      class="project-card platformer-game"
-      role="button"
-      tabindex="0"
-      style="--rot-amt: {randomRot()}deg"
-      href="{createLink('platformer_game')}"
-    >
-      <img src="/platformer.svg" alt="Platformer Game" class="card-svg" />
+    <a href="{createLink('platformer_game')}" class="card-link" style="--rot-amt: {randomRot()}deg">
+      <img src="/cards/platformer_game.svg" alt="Platformer Game" class="card-svg" />
     </a>
 
-    <a
-      class="project-card wildcard"
-      role="button"
-      tabindex="0"
-      style="--rot-amt: {randomRot()}deg"
-      href="{createLink('wildcard')}"
-    >
-      <img src="/wildcard.svg" alt="Wildcard" class="card-svg" />
+    <a href="/app/projects/select" class="card-link" style="--rot-amt: {randomRot()}deg">
+      <img src="/cards/more_projects.svg" alt="More Projects" class="card-svg" />
     </a>
   </div>
 </div>
 
 <style>
-  .get-started-section {
-    background: white;
-    border-radius: 10px;
-    padding: 2rem;
-    max-width: 812px;
-    width: 100%;
+  .create-new-project {
     position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 800px;
+    height: 486px;
+    background-image: url('/shapes/shape-bg-1.svg');
+    background-size: cover;
+    background-position: center;
+    padding-top: 30px;
   }
 
-  .get-started-title {
-    font-family: "Moga", sans-serif;
-    font-size: 90px;
+  .title {
+    font-family: 'Moga', sans-serif;
+    font-size: 48px;
     color: #453b61;
-    text-align: left;
-    margin: 0 0 -0.5rem 0;
-    letter-spacing: -1px;
-    text-box-trim: trim-both;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    margin: 0;
+    margin-top: 8px;
+    font-weight: normal;
+    text-align: center;
   }
 
   .subtitle {
-    font-family: "PT Sans", sans-serif;
-    font-size: 16px;
-    color: black;
-    text-align: left;
+    font-family: 'PT Sans', sans-serif;
+    font-size: 20px;
+    color: #453b61;
+    letter-spacing: -0.5px;
+    margin: 0;
     font-weight: normal;
-    letter-spacing: -0.2px;
-    margin-bottom: 1rem;
+    text-align: center;
   }
 
-  .project-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
-
-  .project-card {
-    position: relative;
-    height: 350px;
-    border-radius: 8px;
-    overflow: hidden;
+  .cards-container {
     display: flex;
-    align-items: center;
+    gap: 24px;
     justify-content: center;
-    cursor: pointer;
-
-    transition: all 0.1s ease-out;
+    margin-top: 24px;
   }
 
-  .project-card:hover {
+  .card-link {
+    display: block;
+    transition: all 0.1s ease-in;
+  }
+
+  .card-link:hover {
     rotate: var(--rot-amt);
     scale: 1.025;
     transition: all 0.1s ease-out;
   }
 
   .card-svg {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  @media (max-width: 768px) {
-    .get-started-title {
-      font-size: 48px;
-    }
-
-    .project-cards {
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
-    }
-
-    .project-card {
-      height: 250px;
-    }
+    display: block;
+    width: 207px;
+    height: 308px;
   }
 </style>

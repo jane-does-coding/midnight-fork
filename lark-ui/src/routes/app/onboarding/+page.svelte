@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { checkAuthStatus, updateUser } from '$lib/auth';
-    import Button from '$lib/Button.svelte';
-    import CalculatorPass from '$lib/onboarding/CalculatorPass.svelte';
+  import Button from '$lib/Button.svelte';
+  import CalculatorPass from '$lib/onboarding/CalculatorPass.svelte';
   import Dialogue from '$lib/onboarding/Dialogue.svelte';
   import ProjectTypeSelect from '$lib/onboarding/ProjectTypeSelect.svelte';
   import Texture from '$lib/Texture.svelte';
@@ -20,6 +20,8 @@
     'Now... Let’s get started.',
     'Build a personal website, platformer game, or anything you want. Here’s a holographic sticker for your efforts.'
   ]
+
+  let submitting = $state(false);
 
   let step = $state(-1);
   let missingInfo = $state(false);
@@ -162,7 +164,12 @@
 
     {#if formVisible}
       <div class="form-container">
-        <form class="signup-form" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form class="signup-form" onsubmit={async (e) => { 
+          e.preventDefault(); 
+          submitting = true;
+          await handleSubmit();
+          submitting = false;
+        }}>
           <div class="form-background"></div>
           
           <div class="form-content">
@@ -216,7 +223,7 @@
             </div>
 
             <div class="submit-button">
-              <Button label="submit" icon="quill" type="submit" />
+              <Button label={submitting ? "submitting..." : "submit"} icon="quill" type="submit" disabled={submitting} />
             </div>
           </div>
         </form>
