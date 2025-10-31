@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import MidnightHeader from "$lib/MidnightHeader.svelte";
-  import { env } from "$env/dynamic/public";
-
-  let email = "";
-  let errorMessage = "";
+  import { goto } from '$app/navigation';
+  import MidnightHeader from '$lib/MidnightHeader.svelte';
+  import { env } from '$env/dynamic/public';
+  import { onMount } from 'svelte';
+  
+  let email = '';
+  let errorMessage = '';
   let showModal = false;
   let isSubmitting = false;
 
@@ -442,16 +443,23 @@
       </div>
     </div>
 
-    <div
-      class="absolute bottom-8 md:bottom-12 lg:bottom-16 2xl:bottom-16 left-0 right-0 flex justify-center z-30"
-    >
-      <p
-        class="font-['PT_Serif',_serif] font-bold text-[#fee1c0] text-lg md:text-2xl lg:text-3xl 2xl:text-[34px] text-center"
-      >
-        a strange letter arrives... <span
-          class="inline-block animate-bounce ml-2">⌄</span
-        >
+    <div class="absolute bottom-8 md:bottom-12 lg:bottom-16 2xl:bottom-16 left-0 right-0 flex justify-center z-30">
+      <p class="font-['PT_Serif',_serif] font-bold text-[#fee1c0] text-lg md:text-2xl lg:text-3xl 2xl:text-[34px] text-center">
+        you receive a strange transmission... <span class="inline-block animate-bounce ml-2">⌄</span>
       </p>
+    </div>
+
+    <!-- Read More button positioned bottom-right -->
+    <div class="absolute bottom-0 z-30 right-8 md:bottom-12 md:right-12 lg:bottom-16 lg:right-16">
+      <button 
+        on:click={() => { playClick(); openModal(); }}
+        type="button"
+        class="bg-[#fee1c0] px-[2vw] py-[1vh] rounded-xl cursor-pointer"
+      >
+        <span class=" font-['PT_Serif',_sans-serif] text-[#443B61] font-bold text-[2.5vh] text-center text-nowrap whitespace-pre">
+          Read More
+        </span>
+      </button>
     </div>
   </section>
 
@@ -491,6 +499,13 @@
         </button>
       </div>
     </div>
+    
+    <div class="absolute bottom-[5%] left-1/2 transform -translate-x-1/2 z-20">
+      <p class="font-['PT_Sans',_sans-serif] text-[#2A2746] text-xs md:text-sm lg:text-base opacity-70">
+        © 2025 Hack Club. Made with love by teenagers, for teenagers.
+      </p>
+    </div>
+  </div>
   </section>
 </div>
 
