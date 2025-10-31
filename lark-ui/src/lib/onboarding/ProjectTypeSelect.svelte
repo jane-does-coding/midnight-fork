@@ -75,7 +75,7 @@
 
   .card-link:hover {
     rotate: var(--rot-amt);
-    scale: 1.025;
+    scale: 1.1;
     transition: all 0.1s ease-out;
   }
 

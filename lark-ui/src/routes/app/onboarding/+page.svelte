@@ -117,6 +117,9 @@
         projectTypeVisible = true;
         butlerVariant = 1;
         break;
+
+      case 9:
+        butlerVariant = 4;
     }
 
     if (step >= dialogues.length) {
