@@ -145,23 +145,6 @@
         </mj-column>
       </mj-section>
 
-      <mj-section padding="10px 10px 10px 10px">
-        <mj-column>
-          <mj-button 
-            href="https://lu.ma/midnight"
-            background-color="#F24B4B"
-            color="#fee1c0"
-            font-size="20px"
-            font-weight="700"
-            border-radius="8px"
-            padding="12px 40px"
-            align="center"
-          >
-            RSVP FOR KICKOFF CALL
-          </mj-button>
-        </mj-column>
-      </mj-section>
-
       <mj-section padding="15px 30px 18px 30px" border-top="2px dashed #d4a574">
         <mj-column>
           <mj-text align="right" font-size="17px" padding="0" line-height="1.4">

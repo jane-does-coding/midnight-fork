@@ -43,8 +43,14 @@ function playClick() {
     playClick();
     errorMessage = '';
     
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('code');
+    
     if (!email.trim()) {
-      goto('/rsvp');
+      const rsvpUrl = codeParam 
+        ? `/rsvp?code=${encodeURIComponent(codeParam)}`
+        : '/rsvp';
+      goto(rsvpUrl);
       return;
     }
 
@@ -54,7 +60,12 @@ function playClick() {
     }
 
     const emailToSend = email.trim();
-    goto(`/rsvp?email=${encodeURIComponent(emailToSend)}`);
+    const queryParams = new URLSearchParams();
+    queryParams.set('email', emailToSend);
+    if (codeParam) {
+      queryParams.set('code', codeParam);
+    }
+    goto(`/rsvp?${queryParams.toString()}`);
 
     const apiUrl = env.PUBLIC_API_URL || '';
     fetch(`${apiUrl}/api/user/rsvp/initial`, {
