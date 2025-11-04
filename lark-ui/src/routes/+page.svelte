@@ -367,7 +367,7 @@ function playClick() {
         
         <form on:submit={handleNavigateToRsvp} class="flex flex-col items-center gap-4 2xl:gap-5 rotate-[-4.25deg]">
           <p class="font-['PT_Serif',_serif] font-bold text-[#fee1c0] text-xs md:text-xl lg:text-2xl xl:text-[28px] 2xl:text-[30px] text-center leading-normal max-w-3xl 2xl:max-w-4xl">
-            Spend 70 hours building personal projects, fly to a <br><span class="text-[#f24b4b]">murder mystery</span> hackathon in Vienna, Austria - Jan 2026 
+            Spend 50 hours building personal projects, fly to a <br><span class="text-[#f24b4b]">murder mystery</span> hackathon in Vienna, Austria - Jan 2026 
           </p>
           
           <div class="flex flex-col items-center gap-3 2xl:gap-4 w-full max-w-2xl 2xl:max-w-[52rem]">
@@ -473,7 +473,7 @@ function playClick() {
         
         <p>For some of you, this might be the first time you're building projects. Others might be more experienced! We built Midnight to support hackers from with all levels of experience.</p>
         
-        <p>The premise is simple: Spend 70 hours building projects, get a guaranteed ticket to an all expense paid murder mystery hackathon in Vienna, Austria.</p>
+        <p>The premise is simple: Spend 50 hours building projects, get a guaranteed ticket to an all expense paid murder mystery hackathon in Vienna, Austria.</p>
         
         <p>Being a part of events like these changed our lives as teenagers, and made us all fall in love with making things. All of us took our first solo flights to go to Hack Club events, build cool shit, and form some of our best friendships. We hope you get to experience that too :)</p>
         
