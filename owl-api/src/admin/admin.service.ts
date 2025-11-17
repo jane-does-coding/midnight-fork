@@ -52,6 +52,7 @@ export class AdminService {
                 state: true,
                 country: true,
                 zipCode: true,
+                hackatimeAccount: true,
                 airtableRecId: true,
                 createdAt: true,
                 updatedAt: true,
@@ -63,10 +64,78 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return submissions;
+    // Fetch trust levels for users with hackatime accounts
+    const submissionsWithTrustLevel = await Promise.all(
+      submissions.map(async (submission) => {
+        if (!submission.project?.user) {
+          return submission;
+        }
+
+        const hackatimeAccount = submission.project.user.hackatimeAccount;
+        let trustLevel: string | null = null;
+        let hackatimeAccountId: string | null = null;
+
+        if (hackatimeAccount) {
+          // Extract numeric ID from hackatime account (could be username or ID)
+          hackatimeAccountId = hackatimeAccount.match(/\d+/)?.[0] || hackatimeAccount;
+          if (hackatimeAccountId) {
+            try {
+              trustLevel = await this.getHackatimeTrustLevel(hackatimeAccountId);
+            } catch (error) {
+              console.error(`Failed to fetch trust level for user ${hackatimeAccountId}:`, error);
+            }
+          }
+        }
+
+        return {
+          ...submission,
+          project: {
+            ...submission.project,
+            user: {
+              ...submission.project.user,
+              hackatimeAccountId,
+              trustLevel,
+            },
+          },
+        };
+      }),
+    );
+
+    return submissionsWithTrustLevel;
   }
 
-  async updateSubmission(submissionId: number, updateSubmissionDto: UpdateSubmissionDto, adminUserId: number) {
+  private async getHackatimeTrustLevel(hackatimeId: string | number): Promise<string | null> {
+    const HACKATIME_ADMIN_API_URL = process.env.HACKATIME_ADMIN_API_URL || 'https://hackatime.hackclub.com/api/admin/v1';
+    const HACKATIME_API_KEY = process.env.HACKATIME_API_KEY;
+
+    if (!HACKATIME_API_KEY) {
+      console.warn('HACKATIME_API_KEY not configured, skipping trust level lookup');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${HACKATIME_ADMIN_API_URL}/user/info?id=${hackatimeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${HACKATIME_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to fetch trust level for user ${hackatimeId}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      return data?.user?.trust_level || null;
+    } catch (error) {
+      console.error(`Error fetching trust level for user ${hackatimeId}:`, error);
+      return null;
+    }
+  }
+
+  async updateSubmission(submissionId: number, updateSubmissionDto: UpdateSubmissionDto, adminUserId: number, adminEmail: string) {
     const submission = await this.prisma.submission.findUnique({
       where: { submissionId },
       include: {
@@ -94,6 +163,13 @@ export class AdminService {
       updateData.approvalStatus = updateSubmissionDto.approvalStatus;
       updateData.reviewedBy = adminUserId.toString();
       updateData.reviewedAt = new Date();
+      
+      // If approving, append auto-generated comment to justification
+      if (updateSubmissionDto.approvalStatus === 'approved') {
+        const approvalComment = ` // Approved in the midnight panel by ${adminEmail} //`;
+        const currentJustification = updateSubmissionDto.hoursJustification || submission.hoursJustification || '';
+        updateData.hoursJustification = currentJustification + approvalComment;
+      }
     }
 
     const updatedSubmission = await this.prisma.submission.update({
@@ -180,7 +256,7 @@ export class AdminService {
     return updatedSubmission;
   }
 
-  async quickApproveSubmission(submissionId: number, adminUserId: number, providedJustification?: string) {
+  async quickApproveSubmission(submissionId: number, adminUserId: number, adminEmail: string, providedJustification?: string) {
     const submission = await this.prisma.submission.findUnique({
       where: { submissionId },
       include: {
@@ -198,7 +274,9 @@ export class AdminService {
 
     const hackatimeHours = submission.project.nowHackatimeHours || 0;
     const autoJustification = `Quick approved with ${hackatimeHours.toFixed(1)} Hackatime hours tracked on Midnight project.`;
-    const hoursJustification = providedJustification || submission.hoursJustification || autoJustification;
+    const baseJustification = providedJustification || submission.hoursJustification || autoJustification;
+    const approvalComment = ` // Approved in the midnight panel by ${adminEmail} //`;
+    const hoursJustification = baseJustification + approvalComment;
 
     const updateData: any = {
       approvalStatus: 'approved',
@@ -564,9 +642,16 @@ export class AdminService {
   }
 
   async recalculateAllProjects() {
+    return this.recalculateAllProjectsWithProgress(() => {});
+  }
+
+  async recalculateAllProjectsWithProgress(onProgress: (data: any) => void) {
     const projects = await this.prisma.project.findMany({
       include: projectAdminInclude,
     });
+
+    const total = projects.length;
+    onProgress({ type: 'start', total });
 
     const cache = new Map<string, Map<string, number>>();
     const baseUrl = process.env.HACKATIME_ADMIN_API_URL || 'https://hackatime.hackclub.com/api/admin/v1';
@@ -576,7 +661,10 @@ export class AdminService {
     const skipped: Array<{ projectId: number; reason: string }> = [];
     const errors: Array<{ projectId: number; message: string }> = [];
 
-    for (const project of projects) {
+    for (let i = 0; i < projects.length; i++) {
+      const project = projects[i];
+      const current = i + 1;
+
       try {
         const result = await this.recalculateProjectInternal(project, {
           strict: false,
@@ -590,9 +678,25 @@ export class AdminService {
             projectId: result.project.projectId,
             nowHackatimeHours: result.project.nowHackatimeHours ?? 0,
           });
+          onProgress({
+            type: 'progress',
+            current,
+            total,
+            projectId: project.projectId,
+            status: 'updated',
+            hours: result.project.nowHackatimeHours ?? 0,
+          });
         } else if (result?.skipped) {
           skipped.push({
             projectId: project.projectId,
+            reason: result.reason,
+          });
+          onProgress({
+            type: 'progress',
+            current,
+            total,
+            projectId: project.projectId,
+            status: 'skipped',
             reason: result.reason,
           });
         }
@@ -601,11 +705,27 @@ export class AdminService {
           projectId: project.projectId,
           message: error instanceof Error ? error.message : 'Unknown error',
         });
+        onProgress({
+          type: 'progress',
+          current,
+          total,
+          projectId: project.projectId,
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     }
 
+    onProgress({
+      type: 'summary',
+      processed: total,
+      updated: updated.length,
+      skipped: skipped.length,
+      errors: errors.length,
+    });
+
     return {
-      processed: projects.length,
+      processed: total,
       updated: updated.length,
       skipped,
       errors,
@@ -613,7 +733,7 @@ export class AdminService {
   }
 
   async getTotals() {
-    const [hackatimeAggregate, approvedAggregate, totalUsers, totalProjects] = await Promise.all([
+    const [hackatimeAggregate, approvedAggregate, totalUsers, totalProjects, projectsWithSubmissions] = await Promise.all([
       this.prisma.project.aggregate({
         _sum: { nowHackatimeHours: true },
       }),
@@ -623,12 +743,28 @@ export class AdminService {
       }),
       this.prisma.user.count(),
       this.prisma.project.count(),
+      this.prisma.project.findMany({
+        where: {
+          submissions: {
+            some: {},
+          },
+        },
+        select: {
+          nowHackatimeHours: true,
+        },
+      }),
     ]);
+
+    const totalHackatimeHoursOnProjectsWithSubmissions = projectsWithSubmissions.reduce(
+      (sum, project) => sum + (project.nowHackatimeHours ?? 0),
+      0,
+    );
 
     return {
       totals: {
         totalHackatimeHours: hackatimeAggregate._sum.nowHackatimeHours ?? 0,
         totalApprovedHours: approvedAggregate._sum.approvedHours ?? 0,
+        totalHackatimeHoursOnProjectsWithSubmissions,
         totalUsers,
         totalProjects,
       },

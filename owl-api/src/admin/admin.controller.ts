@@ -1,5 +1,5 @@
-import { Controller, Get, Put, Body, Param, UseGuards, Req, ParseIntPipe, Delete, Post } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Put, Body, Param, UseGuards, Req, ParseIntPipe, Delete, Post, Res, Sse } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AdminService } from './admin.service';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -34,7 +34,7 @@ export class AdminController {
     @Body() updateSubmissionDto: UpdateSubmissionDto,
     @Req() req: Request,
   ) {
-    return this.adminService.updateSubmission(id, updateSubmissionDto, req.user.userId);
+    return this.adminService.updateSubmission(id, updateSubmissionDto, req.user.userId, req.user.email);
   }
 
   @Post('submissions/:id/quick-approve')
@@ -45,7 +45,7 @@ export class AdminController {
     @Body() body: { hoursJustification?: string },
     @Req() req: Request,
   ) {
-    return this.adminService.quickApproveSubmission(id, req.user.userId, body.hoursJustification);
+    return this.adminService.quickApproveSubmission(id, req.user.userId, req.user.email, body.hoursJustification);
   }
 
   @Put('projects/:id/unlock')
@@ -96,8 +96,27 @@ export class AdminController {
   @Post('projects/recalculate-all')
   @UseGuards(RolesGuard)
   @Roles(Role.Admin)
-  async recalculateAllProjects() {
-    return this.adminService.recalculateAllProjects();
+  async recalculateAllProjects(@Res() res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const sendProgress = (data: any) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    try {
+      await this.adminService.recalculateAllProjectsWithProgress(sendProgress);
+      sendProgress({ type: 'complete' });
+      res.end();
+    } catch (error) {
+      sendProgress({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Unknown error' 
+      });
+      res.end();
+    }
   }
 
   @Delete('projects/:id')
