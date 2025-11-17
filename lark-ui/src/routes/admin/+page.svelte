@@ -681,6 +681,16 @@ function toggleProjectType(projectType: string) {
 function formatProjectType(type: string): string {
 	return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
+
+function normalizeUrl(url: string | null): string | null {
+	if (!url) return null;
+	const trimmed = url.trim();
+	if (!trimmed) return null;
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+		return trimmed;
+	}
+	return `https://${trimmed}`;
+}
 </script>
 
 <svelte:head>
@@ -1046,14 +1056,17 @@ function formatProjectType(type: string): string {
 										<div class="flex flex-wrap gap-2">
 											<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-400 w-full">Quick Actions</h4>
 											{#if submission.project.playableUrl}
-												<a 
-													href={submission.project.playableUrl} 
-													target="_blank" 
-													rel="noreferrer"
-													class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white text-sm transition-colors"
-												>
-													🎮 View Live Demo
-												</a>
+												{@const normalizedPlayableUrl = normalizeUrl(submission.project.playableUrl)}
+												{#if normalizedPlayableUrl}
+													<a 
+														href={normalizedPlayableUrl} 
+														target="_blank" 
+														rel="noreferrer"
+														class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white text-sm transition-colors"
+													>
+														🎮 View Live Demo
+													</a>
+												{/if}
 											{/if}
 											{#if submission.project.repoUrl}
 												<a 
@@ -1253,7 +1266,10 @@ function formatProjectType(type: string): string {
 									<div class="space-y-2">
 										<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-400">Links</h4>
 										{#if project.playableUrl}
-											<a class="text-purple-300 hover:text-purple-200 text-sm break-words" href={project.playableUrl} target="_blank" rel="noreferrer">Playable</a>
+											{@const normalizedPlayableUrl = normalizeUrl(project.playableUrl)}
+											{#if normalizedPlayableUrl}
+												<a class="text-purple-300 hover:text-purple-200 text-sm break-words" href={normalizedPlayableUrl} target="_blank" rel="noreferrer">Playable</a>
+											{/if}
 										{/if}
 										{#if project.repoUrl}
 											<a class="text-purple-300 hover:text-purple-200 text-sm break-words" href={project.repoUrl} target="_blank" rel="noreferrer">Repository</a>

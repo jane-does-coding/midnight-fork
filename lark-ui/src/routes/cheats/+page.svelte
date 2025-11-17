@@ -47,6 +47,16 @@
 
   const API_BASE = 'http://localhost:3000';
 
+  function normalizeUrl(url: string | null): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  }
+
   onMount(async () => {
     if (browser) {
       await checkAuthStatus();
@@ -952,7 +962,10 @@
                 <p><strong>Approved Hours:</strong> {submission.approvedHours}</p>
               {/if}
               {#if submission.playableUrl}
-                <p><strong>Playable URL:</strong> <a href={submission.playableUrl} target="_blank">{submission.playableUrl}</a></p>
+                {@const normalizedPlayableUrl = normalizeUrl(submission.playableUrl)}
+                {#if normalizedPlayableUrl}
+                  <p><strong>Playable URL:</strong> <a href={normalizedPlayableUrl} target="_blank">{submission.playableUrl}</a></p>
+                {/if}
               {/if}
               {#if submission.screenshotUrl}
                 <p><strong>Screenshot URL:</strong> <a href={submission.screenshotUrl} target="_blank">{submission.screenshotUrl}</a></p>
