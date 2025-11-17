@@ -64,6 +64,9 @@
         <div class="submission-progress">
           <p>Approval Status: {projectPageState.project.submissions[0].approvalStatus}</p>
           <p>Submitted at {new Date(projectPageState.project.submissions[0].createdAt).toLocaleString()}</p>
+          {#if projectPageState.project.submissions[0].hoursJustification}
+            <p>Hours Justification: {projectPageState.project.submissions[0].hoursJustification}</p>
+          {/if}
         </div>
       {/if}
 </div>
