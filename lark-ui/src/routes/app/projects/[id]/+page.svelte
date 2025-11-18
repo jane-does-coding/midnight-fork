@@ -74,10 +74,7 @@
 {#if projectPageState.user && projectPageState.user.hackatimeAccount}
       {#if projectPageState.project?.submissions && projectPageState.project.submissions.length > 0}
         <div class="submit-section">
-          <Button
-            label="Submiited"
-            disabled
-          />
+          <Button label="Resubmit" onclick={() => goto(`/app/projects/${projectPageState.project?.projectId}/submit`)}/>
         </div>
       {:else if projectPageState.project?.nowHackatimeProjects && projectPageState.project.nowHackatimeProjects.length > 0}
         <div class="submit-section">

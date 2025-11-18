@@ -14,10 +14,10 @@
   let project = projectPageState.project!;
   let user = projectPageState.user!;
 
-  if (project.submissions.length > 0) {
-    onMount(() => goto(`/app/projects/${projectId}`));
-    //incomplete functionality :pf:
-  }
+  // if (project.submissions.length > 0) {
+  //   onMount(() => goto(`/app/projects/${projectId}`));
+  //   //incomplete functionality :pf:
+  // }
   
   let formpage = $state(1);
 
