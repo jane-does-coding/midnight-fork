@@ -13,6 +13,9 @@ export class MailService {
   private transporter: nodemailer.Transporter;
   private emailTemplate: string;
   private stickerEmailTemplate: string;
+  private otpEmailTemplate: string;
+  private submissionApprovedEmailTemplate: string;
+  private submissionDeniedEmailTemplate: string;
   private smimeUtil: SmimeUtil | null = null;
 
   private smimeEnabled: boolean = false;
@@ -58,6 +61,45 @@ export class MailService {
     } catch (error) {
       console.error('Error loading sticker email template:', error);
       this.stickerEmailTemplate = this.emailTemplate;
+    }
+
+    try {
+      const otpMjmlTemplate = fs.readFileSync(
+        path.join(__dirname, '../../templates/otp-email.mjml'),
+        'utf8',
+      );
+      const otpHtml = mjml2html(otpMjmlTemplate);
+      this.otpEmailTemplate = otpHtml.html;
+      console.log('Loaded OTP email template successfully');
+    } catch (error) {
+      console.error('Error loading OTP email template:', error);
+      this.otpEmailTemplate = this.emailTemplate;
+    }
+
+    try {
+      const submissionApprovedMjmlTemplate = fs.readFileSync(
+        path.join(__dirname, '../../templates/submission-approved.mjml'),
+        'utf8',
+      );
+      const submissionApprovedHtml = mjml2html(submissionApprovedMjmlTemplate);
+      this.submissionApprovedEmailTemplate = submissionApprovedHtml.html;
+      console.log('Loaded submission approved email template successfully');
+    } catch (error) {
+      console.error('Error loading submission approved email template:', error);
+      this.submissionApprovedEmailTemplate = this.emailTemplate;
+    }
+
+    try {
+      const submissionDeniedMjmlTemplate = fs.readFileSync(
+        path.join(__dirname, '../../templates/submission-denied.mjml'),
+        'utf8',
+      );
+      const submissionDeniedHtml = mjml2html(submissionDeniedMjmlTemplate);
+      this.submissionDeniedEmailTemplate = submissionDeniedHtml.html;
+      console.log('Loaded submission denied email template successfully');
+    } catch (error) {
+      console.error('Error loading submission denied email template:', error);
+      this.submissionDeniedEmailTemplate = this.emailTemplate;
     }
 
     this.initializeSmime();
@@ -177,6 +219,15 @@ export class MailService {
     }
 
     return { success: true };
+  }
+
+  generateOtpEmailHtml(otp: string): string {
+    const now = new Date();
+    const dateStr = `${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    
+    return this.otpEmailTemplate
+      .replace(/{{otp}}/g, otp)
+      .replace(/{{date}}/g, dateStr);
   }
 
   async sendImmediateEmail(email: string, htmlContent: string, subject: string, metadata: any = {}): Promise<{ success: boolean }> {
@@ -414,6 +465,64 @@ export class MailService {
     }
 
     console.log(`[${this.jobLock.getWorkerId()}] Processed ${processed} email job(s)`);
+  }
+
+  async sendSubmissionReviewEmail(
+    email: string,
+    data: {
+      projectTitle: string;
+      projectId: number;
+      approved: boolean;
+      approvedHours?: number;
+      feedback?: string;
+    },
+  ): Promise<{ success: boolean }> {
+    const now = new Date();
+    const dateStr = `${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+
+    const subject = data.approved
+      ? `Your project "${data.projectTitle}" has been approved!`
+      : `Your project "${data.projectTitle}" needs attention`;
+
+    const projectUrl = `${process.env.FRONTEND_URL || 'https://midnight.hackclub.com'}/app/projects/${data.projectId}`;
+
+    // Use the appropriate template based on approval status
+    let emailTemplate = data.approved
+      ? this.submissionApprovedEmailTemplate
+      : this.submissionDeniedEmailTemplate;
+
+    let emailContent = emailTemplate
+      .replace(/\{\{date\}\}/g, dateStr)
+      .replace(/\{\{projectTitle\}\}/g, data.projectTitle)
+      .replace(/\{\{projectId\}\}/g, data.projectId.toString())
+      .replace(/\{\{projectUrl\}\}/g, projectUrl);
+
+    // For approved emails, replace approved hours
+    if (data.approved && data.approvedHours !== undefined) {
+      emailContent = emailContent.replace(/\{\{approvedHours\}\}/g, data.approvedHours.toString());
+    }
+
+    // Handle feedback section (only in approved template is it optional)
+    if (data.feedback) {
+      emailContent = emailContent.replace(/\{\{feedback\}\}/g, data.feedback);
+      // Remove conditional tags
+      emailContent = emailContent.replace(/\{\{#if feedback\}\}/g, '');
+      emailContent = emailContent.replace(/\{\{\/if\}\}/g, '');
+    } else {
+      // Remove the entire feedback section if no feedback
+      emailContent = emailContent.replace(/\{\{#if feedback\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+    }
+
+    await this.sendImmediateEmail(email, emailContent, subject, {
+      smimeEnabled: this.smimeEnabled,
+      type: 'submission-review',
+      projectId: data.projectId,
+      approved: data.approved,
+    });
+
+    console.log(`Sent submission review email to: ${email} (Project: ${data.projectTitle}, Approved: ${data.approved})`);
+
+    return { success: true };
   }
 
   getHello(): string {

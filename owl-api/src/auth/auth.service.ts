@@ -122,18 +122,10 @@ export class AuthService {
       },
     });
 
+    const otpEmailHtml = this.mailService.generateOtpEmailHtml(otp);
     await this.mailService.sendImmediateEmail(
       email,
-      `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Your OTP Code</h2>
-          <p>Your one-time password is:</p>
-          <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-            ${otp}
-          </div>
-          <p>This code expires in 10 minutes.</p>
-        </div>
-      `,
+      otpEmailHtml,
       'Your OTP Code'
     );
 
@@ -463,22 +455,11 @@ export class AuthService {
     console.log('Email:', email);
     console.log('OTP:', otp);
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Link Your Hackatime Account</h2>
-        <p>Your verification code is:</p>
-        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-          ${otp}
-        </div>
-        <p>This code expires in 10 minutes.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      </div>
-    `;
-
+    const otpEmailHtml = this.mailService.generateOtpEmailHtml(otp);
     console.log('Calling sendImmediateEmail with type: hackatime-link-otp');
     await this.mailService.sendImmediateEmail(
       email,
-      htmlContent,
+      otpEmailHtml,
       'Link Your Hackatime Account',
       {
         type: 'hackatime-link-otp',

@@ -39,6 +39,7 @@
 			screenshotUrl: string | null;
 			nowHackatimeHours: number | null;
 			nowHackatimeProjects: string[] | null;
+			approvedHours: number | null;
 			user: AdminLightUser;
 		};
 	};
@@ -92,8 +93,8 @@ type AdminMetrics = {
 
 const toSubmissionDraft = (submission: AdminSubmission) => ({
 	approvalStatus: submission.approvalStatus,
-	approvedHours: submission.approvedHours !== null 
-		? submission.approvedHours.toString() 
+	approvedHours: submission.project.approvedHours !== null
+		? submission.project.approvedHours.toString()
 		: (submission.project.nowHackatimeHours !== null ? submission.project.nowHackatimeHours.toFixed(1) : ''),
 	hoursJustification: submission.hoursJustification ?? ''
 });
@@ -636,7 +637,7 @@ function compareSubmissions(a: AdminSubmission, b: AdminSubmission): number {
 			comparison = (a.project.nowHackatimeHours ?? 0) - (b.project.nowHackatimeHours ?? 0);
 			break;
 		case 'approvedHours':
-			comparison = (a.approvedHours ?? 0) - (b.approvedHours ?? 0);
+			comparison = (a.project.approvedHours ?? 0) - (b.project.approvedHours ?? 0);
 			break;
 	}
 	
@@ -1031,9 +1032,9 @@ function normalizeUrl(url: string | null): string | null {
 														Projects: {submission.project.nowHackatimeProjects.join(', ')}
 													</p>
 												{/if}
-												{#if submission.approvedHours !== null}
+												{#if submission.project.approvedHours !== null}
 													<p class="text-sm text-green-300">
-														Approved hours: <span class="font-semibold">{formatHours(submission.approvedHours)}</span>
+														Approved hours: <span class="font-semibold">{formatHours(submission.project.approvedHours)}</span>
 													</p>
 												{/if}
 											</div>

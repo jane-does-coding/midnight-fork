@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../prisma.service';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { AirtableService } from '../airtable/airtable.service';
+import { MailService } from '../mail/mail.service';
 
 const projectAdminInclude = {
   user: {
@@ -32,6 +33,7 @@ export class AdminService {
   constructor(
     private prisma: PrismaService,
     private airtableService: AirtableService,
+    private mailService: MailService,
   ) {}
 
   async getAllSubmissions() {
@@ -116,6 +118,16 @@ export class AdminService {
       },
     });
 
+    // Sync approved hours to the project table
+    if (updateSubmissionDto.approvedHours !== undefined) {
+      await this.prisma.project.update({
+        where: { projectId: submission.projectId },
+        data: {
+          approvedHours: updateSubmissionDto.approvedHours,
+        },
+      });
+    }
+
     // If submission is approved, create Airtable record
     if (updateSubmissionDto.approvalStatus === 'approved' && !submission.project.airtableRecId) {
       try {
@@ -150,7 +162,7 @@ export class AdminService {
         };
 
         const airtableResult = await this.airtableService.createYSWSSubmission(airtableData);
-        
+
         // Update project with Airtable record ID
         await this.prisma.project.update({
           where: { projectId: submission.projectId },
@@ -174,6 +186,25 @@ export class AdminService {
         }
       } catch (error) {
         console.error('Error creating Airtable record:', error);
+        // Don't throw error here to avoid breaking the submission update
+      }
+    }
+
+    // Send email notification if approval status was updated
+    if (updateSubmissionDto.approvalStatus !== undefined) {
+      try {
+        await this.mailService.sendSubmissionReviewEmail(
+          updatedSubmission.project.user.email,
+          {
+            projectTitle: updatedSubmission.project.projectTitle,
+            projectId: updatedSubmission.project.projectId,
+            approved: updateSubmissionDto.approvalStatus === 'approved',
+            approvedHours: updateSubmissionDto.approvedHours,
+            feedback: updateSubmissionDto.hoursJustification,
+          },
+        );
+      } catch (error) {
+        console.error('Error sending submission review email:', error);
         // Don't throw error here to avoid breaking the submission update
       }
     }
@@ -287,6 +318,23 @@ export class AdminService {
       } catch (error) {
         console.error('Error creating Approved Projects record in Airtable:', error);
       }
+    }
+
+    // Send email notification
+    try {
+      await this.mailService.sendSubmissionReviewEmail(
+        updatedSubmission.project.user.email,
+        {
+          projectTitle: updatedSubmission.project.projectTitle,
+          projectId: updatedSubmission.project.projectId,
+          approved: true,
+          approvedHours: hackatimeHours,
+          feedback: hoursJustification,
+        },
+      );
+    } catch (error) {
+      console.error('Error sending submission review email:', error);
+      // Don't throw error here to avoid breaking the submission update
     }
 
     return updatedSubmission;
@@ -618,8 +666,7 @@ export class AdminService {
       this.prisma.project.aggregate({
         _sum: { nowHackatimeHours: true },
       }),
-      this.prisma.submission.aggregate({
-        where: { approvalStatus: 'approved' },
+      this.prisma.project.aggregate({
         _sum: { approvedHours: true },
       }),
       this.prisma.user.count(),

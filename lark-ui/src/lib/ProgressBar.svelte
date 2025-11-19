@@ -28,11 +28,14 @@
     });
 
     let remainingHours = $derived(goalHours - totalHours);
+    let formattedRemainingHours = $derived(remainingHours.toFixed(1));
+    let formattedApprovedHours = $derived(rawApprovedHours.toFixed(1));
+    let formattedPendingHours = $derived((rawTotalHours - rawApprovedHours).toFixed(1));
 </script>
 
 <div class="progress-card">
     <p class="time-left">
-        {remainingHours} hOuRS LEFT TO
+        {formattedRemainingHours} hOuRS LEFT TO
         <span class="midnight">MIDNIGHT</span>
     </p>
 
@@ -77,7 +80,7 @@
                 class="key"
                 style="width: {remainingPercentage * 100}%"
             >
-                {remainingHours} HouRS REMAINING
+                {formattedRemainingHours} HouRS REMAINING
             </p>
         {/if}
     </div>
