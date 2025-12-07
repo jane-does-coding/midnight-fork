@@ -4,7 +4,7 @@ import { MailService } from '../mail/mail.service';
 import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CompleteProfileDto } from './dto/complete-profile.dto';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomBytes, randomUUID, randomInt } from 'crypto';
 import { Role } from '../enums/role.enum';
 
 @Injectable()
@@ -330,7 +330,7 @@ export class AuthService {
   }
 
   private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 999999).toString();
   }
 
   async checkHackatimeAccount(email: string): Promise<number | null> {
