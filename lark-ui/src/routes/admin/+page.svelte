@@ -83,10 +83,71 @@ type AdminMetrics = {
 	totalSubmittedHackatimeHours: number;
 };
 
-	type Tab = 'submissions' | 'projects' | 'users';
+	type Tab = 'submissions' | 'projects' | 'users' | 'shop' | 'giftcodes';
 	type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 	type SortField = 'createdAt' | 'projectTitle' | 'userName' | 'approvalStatus' | 'nowHackatimeHours' | 'approvedHours';
 	type SortDirection = 'asc' | 'desc';
+
+	type ShopItemVariant = {
+		variantId: number;
+		itemId: number;
+		name: string;
+		cost: number;
+		isActive: boolean;
+		createdAt: string;
+		updatedAt: string;
+	};
+
+	type ShopItem = {
+		itemId: number;
+		name: string;
+		description: string | null;
+		imageUrl: string | null;
+		cost: number;
+		isActive: boolean;
+		createdAt: string;
+		updatedAt: string;
+		variants?: ShopItemVariant[];
+	};
+
+	type ShopTransaction = {
+		transactionId: number;
+		userId: number;
+		itemId: number;
+		variantId: number | null;
+		itemDescription: string;
+		cost: number;
+		createdAt: string;
+		user: {
+			userId: number;
+			firstName: string;
+			lastName: string;
+			email: string;
+		};
+		item: {
+			itemId: number;
+			name: string;
+		};
+		variant?: {
+			variantId: number;
+			name: string;
+		} | null;
+	};
+
+	type GiftCode = {
+		id: string;
+		code: string;
+		email: string;
+		firstName: string | null;
+		lastName: string | null;
+		itemDescription: string;
+		imageUrl: string;
+		filloutUrl: string;
+		isClaimed: boolean;
+		claimedAt: string | null;
+		emailSentAt: string | null;
+		createdAt: string;
+	};
 
 	const projectTypes = ['personal_website', 'platformer_game', 'website', 'game', 'terminal_cli', 'desktop_app', 'mobile_app', 'wildcard'] as const;
 	const statusOptions = ['pending', 'approved', 'rejected'] as const;
@@ -126,10 +187,13 @@ let metrics = $state<AdminMetrics>(
 		totalSubmittedHackatimeHours: 0,
 	}
 );
+let shopItems = $state<ShopItem[]>(data.shopItems ?? []);
+let shopTransactions = $state<ShopTransaction[]>(data.shopTransactions ?? []);
 
 let submissionsLoaded = $state((data.submissions?.length ?? 0) > 0);
 let projectsLoaded = $state((data.projects?.length ?? 0) > 0);
 let usersLoaded = $state((data.users?.length ?? 0) > 0);
+let shopLoaded = $state((data.shopItems?.length ?? 0) > 0 || (data.shopTransactions?.length ?? 0) > 0);
 
 let searchQuery = $state('');
 let selectedStatuses = $state<Set<string>>(new Set());
@@ -195,6 +259,42 @@ let submissionsLoading = $state(false);
 let projectsLoading = $state(false);
 let usersLoading = $state(false);
 let metricsLoading = $state(false);
+let shopLoading = $state(false);
+
+let shopItemForm = $state<{ name: string; description: string; imageUrl: string; cost: string }>({
+	name: '',
+	description: '',
+	imageUrl: '',
+	cost: '',
+});
+let editingItemId = $state<number | null>(null);
+let shopItemSaving = $state(false);
+let shopItemError = $state('');
+let shopItemSuccess = $state('');
+let shopSubTab = $state<'items' | 'transactions'>('items');
+
+let variantForm = $state<{ name: string; cost: string }>({ name: '', cost: '' });
+let addingVariantToItemId = $state<number | null>(null);
+let editingVariantId = $state<number | null>(null);
+let variantSaving = $state(false);
+let variantError = $state('');
+let variantSuccess = $state('');
+let expandedItemVariants = $state<Record<number, boolean>>({});
+let refundingTransaction = $state<number | null>(null);
+
+let giftCodes = $state<GiftCode[]>([]);
+let giftCodesLoaded = $state(false);
+let giftCodesLoading = $state(false);
+let giftCodeForm = $state<{ emails: string; itemDescription: string; imageUrl: string; filloutUrl: string }>({
+	emails: '',
+	itemDescription: '',
+	imageUrl: '',
+	filloutUrl: '',
+});
+let giftCodeSending = $state(false);
+let giftCodeError = $state('');
+let giftCodeSuccess = $state('');
+let giftCodeResults = $state<Array<{ email: string; code: string; success: boolean; error?: string }>>([]);
 
 let submissionDrafts = $state<Record<number, { approvalStatus: string; approvedHours: string; userFeedback: string; hoursJustification: string; sendEmailNotification: boolean }>>(
 	buildSubmissionDrafts(data.submissions ?? [])
@@ -306,6 +406,268 @@ function formatCount(value: number) {
 			}
 		} finally {
 			usersLoading = false;
+		}
+	}
+
+	async function loadShopItems() {
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/items`, {
+				credentials: 'include',
+			});
+			if (response.ok) {
+				shopItems = await response.json();
+			}
+		} catch (err) {
+			console.error('Failed to load shop items:', err);
+		}
+	}
+
+	async function loadShopTransactions() {
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/transactions`, {
+				credentials: 'include',
+			});
+			if (response.ok) {
+				shopTransactions = await response.json();
+			}
+		} catch (err) {
+			console.error('Failed to load shop transactions:', err);
+		}
+	}
+
+	async function loadShopData() {
+		shopLoading = true;
+		try {
+			await Promise.all([loadShopItems(), loadShopTransactions()]);
+			shopLoaded = true;
+		} finally {
+			shopLoading = false;
+		}
+	}
+
+	function resetItemForm() {
+		shopItemForm = { name: '', description: '', imageUrl: '', cost: '' };
+		editingItemId = null;
+		shopItemError = '';
+		shopItemSuccess = '';
+	}
+
+	function startEditItem(item: ShopItem) {
+		editingItemId = item.itemId;
+		shopItemForm = {
+			name: item.name,
+			description: item.description || '',
+			imageUrl: item.imageUrl || '',
+			cost: item.cost.toString(),
+		};
+		shopItemError = '';
+		shopItemSuccess = '';
+	}
+
+	async function saveShopItem() {
+		shopItemSaving = true;
+		shopItemError = '';
+		shopItemSuccess = '';
+
+		const payload = {
+			name: shopItemForm.name,
+			description: shopItemForm.description || undefined,
+			imageUrl: shopItemForm.imageUrl || undefined,
+			cost: parseFloat(shopItemForm.cost),
+		};
+
+		try {
+			let response;
+			if (editingItemId) {
+				response = await fetch(`${apiUrl}/api/shop/admin/items/${editingItemId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload),
+				});
+			} else {
+				response = await fetch(`${apiUrl}/api/shop/admin/items`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload),
+				});
+			}
+
+			if (!response.ok) {
+				const { message } = await response.json().catch(() => ({ message: 'Failed to save item' }));
+				shopItemError = message ?? 'Failed to save item';
+				return;
+			}
+
+			shopItemSuccess = editingItemId ? 'Item updated successfully' : 'Item created successfully';
+			resetItemForm();
+			await loadShopItems();
+		} catch (err) {
+			shopItemError = err instanceof Error ? err.message : 'Failed to save item';
+		} finally {
+			shopItemSaving = false;
+		}
+	}
+
+	async function toggleItemActive(item: ShopItem) {
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/items/${item.itemId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ isActive: !item.isActive }),
+			});
+
+			if (response.ok) {
+				await loadShopItems();
+			}
+		} catch (err) {
+			console.error('Failed to toggle item:', err);
+		}
+	}
+
+	async function deleteShopItem(itemId: number) {
+		const confirmDelete = typeof window !== 'undefined' ? window.confirm('Delete this shop item? This cannot be undone.') : true;
+		if (!confirmDelete) return;
+
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/items/${itemId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+
+			if (response.ok) {
+				await loadShopItems();
+			}
+		} catch (err) {
+			console.error('Failed to delete item:', err);
+		}
+	}
+
+	function resetVariantForm() {
+		variantForm = { name: '', cost: '' };
+		addingVariantToItemId = null;
+		editingVariantId = null;
+		variantError = '';
+		variantSuccess = '';
+	}
+
+	function startAddVariant(itemId: number) {
+		resetVariantForm();
+		addingVariantToItemId = itemId;
+		expandedItemVariants[itemId] = true;
+	}
+
+	function startEditVariant(variant: ShopItemVariant) {
+		variantForm = { name: variant.name, cost: variant.cost.toString() };
+		editingVariantId = variant.variantId;
+		addingVariantToItemId = variant.itemId;
+		variantError = '';
+		variantSuccess = '';
+	}
+
+	async function saveVariant() {
+		if (!addingVariantToItemId) return;
+		
+		variantSaving = true;
+		variantError = '';
+		variantSuccess = '';
+
+		const payload = {
+			name: variantForm.name,
+			cost: parseFloat(variantForm.cost),
+		};
+
+		try {
+			let response;
+			if (editingVariantId) {
+				response = await fetch(`${apiUrl}/api/shop/admin/variants/${editingVariantId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload),
+				});
+			} else {
+				response = await fetch(`${apiUrl}/api/shop/admin/items/${addingVariantToItemId}/variants`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload),
+				});
+			}
+
+			if (!response.ok) {
+				const { message } = await response.json().catch(() => ({ message: 'Failed to save variant' }));
+				variantError = message ?? 'Failed to save variant';
+				return;
+			}
+
+			variantSuccess = editingVariantId ? 'Variant updated' : 'Variant created';
+			resetVariantForm();
+			await loadShopItems();
+		} catch (err) {
+			variantError = err instanceof Error ? err.message : 'Failed to save variant';
+		} finally {
+			variantSaving = false;
+		}
+	}
+
+	async function toggleVariantActive(variant: ShopItemVariant) {
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/variants/${variant.variantId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ isActive: !variant.isActive }),
+			});
+
+			if (response.ok) {
+				await loadShopItems();
+			}
+		} catch (err) {
+			console.error('Failed to toggle variant:', err);
+		}
+	}
+
+	async function deleteVariant(variantId: number) {
+		const confirmDelete = typeof window !== 'undefined' ? window.confirm('Delete this variant? This cannot be undone.') : true;
+		if (!confirmDelete) return;
+
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/variants/${variantId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+
+			if (response.ok) {
+				await loadShopItems();
+			}
+		} catch (err) {
+			console.error('Failed to delete variant:', err);
+		}
+	}
+
+	async function handleRefundTransaction(transactionId: number) {
+		const confirmRefund = typeof window !== 'undefined' ? window.confirm('Refund this transaction? The hours will be returned to the user.') : true;
+		if (!confirmRefund) return;
+
+		refundingTransaction = transactionId;
+		try {
+			const response = await fetch(`${apiUrl}/api/shop/admin/transactions/${transactionId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+
+			if (response.ok) {
+				shopTransactions = shopTransactions.filter(t => t.transactionId !== transactionId);
+			} else {
+				console.error('Failed to refund transaction');
+			}
+		} catch (err) {
+			console.error('Failed to refund transaction:', err);
+		} finally {
+			refundingTransaction = null;
 		}
 	}
 
@@ -575,6 +937,112 @@ async function recalculateAllProjectsHours() {
 		}
 	}
 
+	async function showShopTab() {
+		activeTab = 'shop';
+		if (!shopLoaded && !shopLoading) {
+			await loadShopData();
+		}
+	}
+
+	async function loadGiftCodes() {
+		giftCodesLoading = true;
+		try {
+			const response = await fetch(`${apiUrl}/api/admin/gift-codes`, {
+				credentials: 'include',
+			});
+			if (response.ok) {
+				giftCodes = await response.json();
+				giftCodesLoaded = true;
+			}
+		} catch (err) {
+			console.error('Failed to load gift codes:', err);
+		} finally {
+			giftCodesLoading = false;
+		}
+	}
+
+	async function showGiftCodesTab() {
+		activeTab = 'giftcodes';
+		if (!giftCodesLoaded && !giftCodesLoading) {
+			await loadGiftCodes();
+		}
+	}
+
+	function resetGiftCodeForm() {
+		giftCodeForm = { emails: '', itemDescription: '', imageUrl: '', filloutUrl: '' };
+		giftCodeError = '';
+		giftCodeSuccess = '';
+		giftCodeResults = [];
+	}
+
+	async function sendGiftCodes() {
+		giftCodeSending = true;
+		giftCodeError = '';
+		giftCodeSuccess = '';
+		giftCodeResults = [];
+
+		const emailList = giftCodeForm.emails
+			.split(/[\n,;]+/)
+			.map(e => e.trim())
+			.filter(e => e.length > 0 && e.includes('@'));
+
+		if (emailList.length === 0) {
+			giftCodeError = 'Please enter at least one valid email address';
+			giftCodeSending = false;
+			return;
+		}
+
+		if (!giftCodeForm.itemDescription.trim()) {
+			giftCodeError = 'Please enter an item description';
+			giftCodeSending = false;
+			return;
+		}
+
+		if (!giftCodeForm.imageUrl.trim()) {
+			giftCodeError = 'Please enter an image URL';
+			giftCodeSending = false;
+			return;
+		}
+
+		if (!giftCodeForm.filloutUrl.trim()) {
+			giftCodeError = 'Please enter a Fillout URL';
+			giftCodeSending = false;
+			return;
+		}
+
+		try {
+			const response = await fetch(`${apiUrl}/api/admin/gift-codes/send`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({
+					emails: emailList,
+					itemDescription: giftCodeForm.itemDescription,
+					imageUrl: giftCodeForm.imageUrl,
+					filloutUrl: giftCodeForm.filloutUrl,
+				}),
+			});
+
+			if (!response.ok) {
+				const { message } = await response.json().catch(() => ({ message: 'Failed to send gift codes' }));
+				giftCodeError = message ?? 'Failed to send gift codes';
+				return;
+			}
+
+			const result = await response.json();
+			giftCodeResults = result.results || [];
+			giftCodeSuccess = `Sent ${result.successful}/${result.total} emails successfully`;
+			
+			if (result.successful > 0) {
+				await loadGiftCodes();
+			}
+		} catch (err) {
+			giftCodeError = err instanceof Error ? err.message : 'Failed to send gift codes';
+		} finally {
+			giftCodeSending = false;
+		}
+	}
+
 $effect(() => {
 	if (submissions.length === 0) {
 		return;
@@ -794,6 +1262,18 @@ function normalizeUrl(url: string | null): string | null {
 					onclick={showUsersTab}
 				>
 					Users
+				</button>
+				<button
+					class={`px-4 py-2 rounded-lg border transition-colors ${activeTab === 'shop' ? 'bg-purple-600 border-purple-400' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}
+					onclick={showShopTab}
+				>
+					Shop
+				</button>
+				<button
+					class={`px-4 py-2 rounded-lg border transition-colors ${activeTab === 'giftcodes' ? 'bg-purple-600 border-purple-400' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}
+					onclick={showGiftCodesTab}
+				>
+					Gift Codes
 				</button>
 			</div>
 		</header>
@@ -1473,7 +1953,7 @@ function normalizeUrl(url: string | null): string | null {
 					</div>
 				{/if}
 			</section>
-		{:else}
+		{:else if activeTab === 'users'}
 			<section class="space-y-4">
 				<div class="flex items-center justify-between">
 					<h2 class="text-2xl font-semibold">Users</h2>
@@ -1553,6 +2033,491 @@ function normalizeUrl(url: string | null): string | null {
 								{/if}
 							</div>
 						{/each}
+					</div>
+				{/if}
+			</section>
+		{:else if activeTab === 'shop'}
+			<section class="space-y-4">
+				<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<h2 class="text-2xl font-semibold">Shop Management</h2>
+					<div class="flex gap-2">
+						<button
+							class={`px-4 py-2 rounded-lg border transition-colors ${shopSubTab === 'items' ? 'bg-purple-600 border-purple-400' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}
+							onclick={() => shopSubTab = 'items'}
+						>
+							Items ({shopItems.length})
+						</button>
+						<button
+							class={`px-4 py-2 rounded-lg border transition-colors ${shopSubTab === 'transactions' ? 'bg-purple-600 border-purple-400' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}
+							onclick={() => shopSubTab = 'transactions'}
+						>
+							Transactions ({shopTransactions.length})
+						</button>
+						<button
+							class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors"
+							onclick={loadShopData}
+						>
+							Refresh
+						</button>
+					</div>
+				</div>
+
+				{#if shopLoading}
+					<div class="py-12 text-center text-gray-300">Loading shop data...</div>
+				{:else if shopSubTab === 'items'}
+					<div class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur p-6 space-y-6">
+						<h3 class="text-lg font-semibold">{editingItemId ? 'Edit Item' : 'Create New Item'}</h3>
+						
+						<div class="grid gap-4 md:grid-cols-2">
+							<div class="space-y-2">
+								<label class="text-sm font-medium text-gray-300" for="item-name">Name *</label>
+								<input
+									id="item-name"
+									type="text"
+									class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+									placeholder="Item name"
+									bind:value={shopItemForm.name}
+								/>
+							</div>
+							<div class="space-y-2">
+								<label class="text-sm font-medium text-gray-300" for="item-cost">Cost (hours) *</label>
+								<input
+									id="item-cost"
+									type="number"
+									step="0.1"
+									min="0"
+									class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+									placeholder="0"
+									bind:value={shopItemForm.cost}
+								/>
+							</div>
+							<div class="space-y-2">
+								<label class="text-sm font-medium text-gray-300" for="item-image">Image URL</label>
+								<input
+									id="item-image"
+									type="text"
+									class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+									placeholder="https://..."
+									bind:value={shopItemForm.imageUrl}
+								/>
+							</div>
+							<div class="space-y-2">
+								<label class="text-sm font-medium text-gray-300" for="item-description">Description</label>
+								<textarea
+									id="item-description"
+									class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+									rows="2"
+									placeholder="Item description..."
+									bind:value={shopItemForm.description}
+								></textarea>
+							</div>
+						</div>
+
+						<div class="flex flex-wrap gap-3 items-center">
+							<button
+								class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
+								onclick={saveShopItem}
+								disabled={shopItemSaving || !shopItemForm.name || !shopItemForm.cost}
+							>
+								{shopItemSaving ? 'Saving...' : (editingItemId ? 'Update Item' : 'Create Item')}
+							</button>
+							{#if editingItemId}
+								<button
+									class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+									onclick={resetItemForm}
+								>
+									Cancel Edit
+								</button>
+							{/if}
+							{#if shopItemError}
+								<span class="text-red-400 text-sm">{shopItemError}</span>
+							{/if}
+							{#if shopItemSuccess}
+								<span class="text-green-400 text-sm">{shopItemSuccess}</span>
+							{/if}
+						</div>
+					</div>
+
+					{#if shopItems.length === 0}
+						<div class="py-12 text-center text-gray-300">No shop items yet. Create one above!</div>
+					{:else}
+						<div class="grid gap-4">
+							{#each shopItems as item (item.itemId)}
+								<div class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur p-6 space-y-4">
+									<div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+										<div class="flex gap-4">
+											{#if item.imageUrl}
+												<img 
+													src={item.imageUrl} 
+													alt={item.name}
+													class="w-20 h-20 object-cover rounded-lg border border-gray-700"
+												/>
+											{:else}
+												<div class="w-20 h-20 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center text-2xl">
+													🛍️
+												</div>
+											{/if}
+											<div>
+												<h3 class="text-xl font-semibold flex items-center gap-2">
+													{item.name}
+													{#if !item.isActive}
+														<span class="px-2 py-0.5 text-xs rounded bg-red-500/20 border border-red-400 text-red-300">Inactive</span>
+													{/if}
+													{#if item.variants && item.variants.length > 0}
+														<span class="px-2 py-0.5 text-xs rounded bg-blue-500/20 border border-blue-400 text-blue-300">{item.variants.length} variant{item.variants.length > 1 ? 's' : ''}</span>
+													{/if}
+												</h3>
+												<p class="text-sm text-purple-300 font-semibold">{item.cost} hours {item.variants && item.variants.length > 0 ? '(base)' : ''}</p>
+												{#if item.description}
+													<p class="text-sm text-gray-400 mt-1">{item.description}</p>
+												{/if}
+												<p class="text-xs text-gray-500 mt-2">Updated {formatDate(item.updatedAt)}</p>
+											</div>
+										</div>
+										<div class="flex flex-wrap gap-2">
+											<button
+												class="px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500 text-blue-300 hover:bg-blue-600/30 text-sm transition-colors"
+												onclick={() => { expandedItemVariants[item.itemId] = !expandedItemVariants[item.itemId]; }}
+											>
+												{expandedItemVariants[item.itemId] ? 'Hide' : 'Show'} Variants
+											</button>
+											<button
+												class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-sm transition-colors"
+												onclick={() => startEditItem(item)}
+											>
+												Edit
+											</button>
+											<button
+												class={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${item.isActive ? 'bg-yellow-600/20 border-yellow-500 text-yellow-300 hover:bg-yellow-600/30' : 'bg-green-600/20 border-green-500 text-green-300 hover:bg-green-600/30'}`}
+												onclick={() => toggleItemActive(item)}
+											>
+												{item.isActive ? 'Deactivate' : 'Activate'}
+											</button>
+											<button
+												class="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-500 text-red-300 hover:bg-red-600/30 text-sm transition-colors"
+												onclick={() => deleteShopItem(item.itemId)}
+											>
+												Delete
+											</button>
+										</div>
+									</div>
+
+									{#if expandedItemVariants[item.itemId]}
+										<div class="border-t border-gray-700 pt-4 space-y-3">
+											<div class="flex items-center justify-between">
+												<h4 class="text-sm font-semibold text-gray-300">Variants</h4>
+												<button
+													class="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm transition-colors"
+													onclick={() => startAddVariant(item.itemId)}
+												>
+													+ Add Variant
+												</button>
+											</div>
+
+											{#if addingVariantToItemId === item.itemId}
+												<div class="bg-gray-800/50 rounded-lg p-4 space-y-3">
+													<div class="grid gap-3 md:grid-cols-3">
+														<div>
+															<label class="text-xs text-gray-400">Variant Name *</label>
+															<input
+																type="text"
+																class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+																placeholder="e.g., XL, $200"
+																bind:value={variantForm.name}
+															/>
+														</div>
+														<div>
+															<label class="text-xs text-gray-400">Cost (hours) *</label>
+															<input
+																type="number"
+																step="0.1"
+																min="0"
+																class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+																bind:value={variantForm.cost}
+															/>
+														</div>
+														<div class="flex items-end gap-2">
+															<button
+																class="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-sm transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
+																onclick={saveVariant}
+																disabled={variantSaving || !variantForm.name || !variantForm.cost}
+															>
+																{variantSaving ? 'Saving...' : (editingVariantId ? 'Update' : 'Add')}
+															</button>
+															<button
+																class="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm transition-colors"
+																onclick={resetVariantForm}
+															>
+																Cancel
+															</button>
+														</div>
+													</div>
+													{#if variantError}
+														<p class="text-red-400 text-xs">{variantError}</p>
+													{/if}
+													{#if variantSuccess}
+														<p class="text-green-400 text-xs">{variantSuccess}</p>
+													{/if}
+												</div>
+											{/if}
+
+											{#if item.variants && item.variants.length > 0}
+												<div class="space-y-2">
+													{#each item.variants as variant (variant.variantId)}
+														<div class="flex items-center justify-between bg-gray-800/30 rounded-lg px-4 py-2">
+															<div class="flex items-center gap-3">
+																<span class="font-medium text-white">{variant.name}</span>
+																<span class="text-purple-300 text-sm">{variant.cost} hours</span>
+																{#if !variant.isActive}
+																	<span class="px-2 py-0.5 text-xs rounded bg-red-500/20 border border-red-400 text-red-300">Inactive</span>
+																{/if}
+															</div>
+															<div class="flex gap-2">
+																<button
+																	class="px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-xs transition-colors"
+																	onclick={() => startEditVariant(variant)}
+																>
+																	Edit
+																</button>
+																<button
+																	class={`px-2 py-1 rounded text-xs transition-colors ${variant.isActive ? 'bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30' : 'bg-green-600/20 text-green-300 hover:bg-green-600/30'}`}
+																	onclick={() => toggleVariantActive(variant)}
+																>
+																	{variant.isActive ? 'Deactivate' : 'Activate'}
+																</button>
+																<button
+																	class="px-2 py-1 rounded bg-red-600/20 text-red-300 hover:bg-red-600/30 text-xs transition-colors"
+																	onclick={() => deleteVariant(variant.variantId)}
+																>
+																	Delete
+																</button>
+															</div>
+														</div>
+													{/each}
+												</div>
+											{:else}
+												<p class="text-gray-500 text-sm">No variants yet. Add one to offer different options.</p>
+											{/if}
+										</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
+				{:else}
+					{#if shopTransactions.length === 0}
+						<div class="py-12 text-center text-gray-300">No transactions yet.</div>
+					{:else}
+						<div class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur overflow-hidden">
+							<table class="w-full">
+								<thead class="bg-gray-800/50">
+									<tr>
+										<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Date</th>
+										<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">User</th>
+										<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Item</th>
+										<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Cost</th>
+										<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-gray-700">
+									{#each shopTransactions as transaction (transaction.transactionId)}
+										<tr class="hover:bg-gray-800/30">
+											<td class="px-4 py-3 text-sm text-gray-300">{formatDate(transaction.createdAt)}</td>
+											<td class="px-4 py-3">
+												<p class="text-sm font-medium text-white">{transaction.user.firstName} {transaction.user.lastName}</p>
+												<p class="text-xs text-gray-400">{transaction.user.email}</p>
+											</td>
+											<td class="px-4 py-3">
+												<p class="text-sm font-medium text-white">
+													{transaction.item.name}
+													{#if transaction.variant}
+														<span class="text-blue-300"> ({transaction.variant.name})</span>
+													{/if}
+												</p>
+												<p class="text-xs text-gray-400">{transaction.itemDescription}</p>
+											</td>
+											<td class="px-4 py-3 text-sm font-semibold text-purple-300">{transaction.cost} hours</td>
+											<td class="px-4 py-3">
+												<button
+													class="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-500 text-red-300 hover:bg-red-600/30 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+													onclick={() => handleRefundTransaction(transaction.transactionId)}
+													disabled={refundingTransaction === transaction.transactionId}
+												>
+													{refundingTransaction === transaction.transactionId ? 'Refunding...' : 'Refund'}
+												</button>
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{/if}
+				{/if}
+			</section>
+		{:else if activeTab === 'giftcodes'}
+			<section class="space-y-4">
+				<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<h2 class="text-2xl font-semibold">Gift Codes</h2>
+					<button
+						class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors"
+						onclick={loadGiftCodes}
+					>
+						Refresh
+					</button>
+				</div>
+
+				<div class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur p-6 space-y-6">
+					<h3 class="text-lg font-semibold">Send Gift Code Emails</h3>
+					
+					<div class="grid gap-4 md:grid-cols-2">
+						<div class="space-y-2 md:col-span-2">
+							<label class="text-sm font-medium text-gray-300" for="gift-emails">Email Addresses *</label>
+							<textarea
+								id="gift-emails"
+								class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+								rows="4"
+								placeholder="Enter email addresses (one per line, or comma/semicolon separated)&#10;example@email.com&#10;another@email.com"
+								bind:value={giftCodeForm.emails}
+							></textarea>
+						</div>
+						<div class="space-y-2">
+							<label class="text-sm font-medium text-gray-300" for="gift-description">Item Description *</label>
+							<input
+								id="gift-description"
+								type="text"
+								class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+								placeholder="e.g., Midnight Sticker Sheet"
+								bind:value={giftCodeForm.itemDescription}
+							/>
+						</div>
+						<div class="space-y-2">
+							<label class="text-sm font-medium text-gray-300" for="gift-image">Image URL *</label>
+							<input
+								id="gift-image"
+								type="text"
+								class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+								placeholder="https://example.com/image.png"
+								bind:value={giftCodeForm.imageUrl}
+							/>
+						</div>
+						<div class="space-y-2 md:col-span-2">
+							<label class="text-sm font-medium text-gray-300" for="gift-fillout">Fillout Form URL *</label>
+							<input
+								id="gift-fillout"
+								type="text"
+								class="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+								placeholder="https://forms.fillout.com/your-form"
+								bind:value={giftCodeForm.filloutUrl}
+							/>
+							<p class="text-xs text-gray-500">Parameters first_name, last_name, email, and lfd_rec will be automatically appended</p>
+						</div>
+					</div>
+
+					{#if giftCodeForm.imageUrl}
+						<div class="flex items-center gap-4">
+							<div class="w-24 h-24 rounded-lg border border-gray-700 overflow-hidden bg-gray-800">
+								<img src={giftCodeForm.imageUrl} alt="Preview" class="w-full h-full object-cover" onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+							</div>
+							<p class="text-sm text-gray-400">Image Preview</p>
+						</div>
+					{/if}
+
+					<div class="flex flex-wrap gap-3 items-center">
+						<button
+							class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors disabled:bg-gray-700 disabled:cursor-not-allowed"
+							onclick={sendGiftCodes}
+							disabled={giftCodeSending || !giftCodeForm.emails || !giftCodeForm.itemDescription || !giftCodeForm.imageUrl || !giftCodeForm.filloutUrl}
+						>
+							{giftCodeSending ? 'Sending...' : 'Send Gift Code Emails'}
+						</button>
+						<button
+							class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+							onclick={resetGiftCodeForm}
+						>
+							Clear Form
+						</button>
+						{#if giftCodeError}
+							<span class="text-red-400 text-sm">{giftCodeError}</span>
+						{/if}
+						{#if giftCodeSuccess}
+							<span class="text-green-400 text-sm">{giftCodeSuccess}</span>
+						{/if}
+					</div>
+
+					{#if giftCodeResults.length > 0}
+						<div class="border-t border-gray-700 pt-4 space-y-2">
+							<h4 class="text-sm font-semibold text-gray-300">Send Results</h4>
+							<div class="max-h-48 overflow-y-auto space-y-1">
+								{#each giftCodeResults as result}
+									<div class="flex items-center gap-2 text-sm">
+										{#if result.success}
+											<span class="text-green-400">✓</span>
+										{:else}
+											<span class="text-red-400">✗</span>
+										{/if}
+										<span class="text-gray-300">{result.email}</span>
+										{#if result.success}
+											<span class="text-gray-500 font-mono text-xs">{result.code}</span>
+										{:else}
+											<span class="text-red-400 text-xs">{result.error}</span>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				</div>
+
+				{#if giftCodesLoading}
+					<div class="py-12 text-center text-gray-300">Loading gift codes...</div>
+				{:else if giftCodes.length === 0}
+					<div class="py-12 text-center text-gray-300">No gift codes sent yet.</div>
+				{:else}
+					<div class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur overflow-hidden">
+						<table class="w-full">
+							<thead class="bg-gray-800/50">
+								<tr>
+									<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Date</th>
+									<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Email</th>
+									<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Code</th>
+									<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Item</th>
+									<th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-700">
+								{#each giftCodes as giftCode (giftCode.id)}
+									<tr class="hover:bg-gray-800/30">
+										<td class="px-4 py-3 text-sm text-gray-300">{formatDate(giftCode.createdAt)}</td>
+										<td class="px-4 py-3">
+											<p class="text-sm font-medium text-white">{giftCode.email}</p>
+											{#if giftCode.firstName || giftCode.lastName}
+												<p class="text-xs text-gray-400">{giftCode.firstName} {giftCode.lastName}</p>
+											{/if}
+										</td>
+										<td class="px-4 py-3">
+											<span class="font-mono text-sm text-purple-300">{giftCode.code}</span>
+										</td>
+										<td class="px-4 py-3">
+											<div class="flex items-center gap-2">
+												{#if giftCode.imageUrl}
+													<img src={giftCode.imageUrl} alt="" class="w-8 h-8 rounded object-cover" />
+												{/if}
+												<span class="text-sm text-gray-300">{giftCode.itemDescription}</span>
+											</div>
+										</td>
+										<td class="px-4 py-3">
+											{#if giftCode.isClaimed}
+												<span class="px-2 py-1 text-xs rounded bg-green-500/20 border border-green-400 text-green-300">Claimed</span>
+											{:else if giftCode.emailSentAt}
+												<span class="px-2 py-1 text-xs rounded bg-blue-500/20 border border-blue-400 text-blue-300">Sent</span>
+											{:else}
+												<span class="px-2 py-1 text-xs rounded bg-yellow-500/20 border border-yellow-400 text-yellow-300">Pending</span>
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
 					</div>
 				{/if}
 			</section>

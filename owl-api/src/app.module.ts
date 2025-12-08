@@ -10,6 +10,8 @@ import { AdminModule } from "./admin/admin.module";
 import { EditRequestsModule } from "./edit-requests/edit-requests.module";
 import { HealthModule } from "./health/health.module";
 import { UploadsModule } from "./uploads/uploads.module";
+import { ShopModule } from "./shop/shop.module";
+import { GiftCodesModule } from "./gift-codes/gift-codes.module";
 
 @Module({
   imports: [
@@ -25,7 +27,9 @@ import { UploadsModule } from "./uploads/uploads.module";
     AdminModule,
     EditRequestsModule,
     HealthModule,
-    UploadsModule
+    UploadsModule,
+    ShopModule,
+    GiftCodesModule
   ],
   providers: [
     {

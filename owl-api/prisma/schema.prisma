@@ -34,6 +34,7 @@ model User {
   editRequests    EditRequest[]
   reviewedRequests EditRequest[] @relation("EditRequestReviewer")
   hackatimeLinkOtps HackatimeLinkOtp[]
+  transactions    Transaction[]
 
   @@map("users")
 }
@@ -240,4 +241,72 @@ model UsersAirtable {
   birthday   DateTime? @db.Date
 
   @@map("users_airtable")
+}
+
+model ShopItem {
+  itemId       Int               @id @default(autoincrement()) @map("item_id")
+  name         String            @db.VarChar(100)
+  description  String?           @db.VarChar(500)
+  imageUrl     String?           @map("image_url")
+  cost         Float
+  isActive     Boolean           @default(true) @map("is_active")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  transactions Transaction[]
+  variants     ShopItemVariant[]
+
+  @@map("shop_items")
+}
+
+model ShopItemVariant {
+  variantId    Int           @id @default(autoincrement()) @map("variant_id")
+  itemId       Int           @map("item_id")
+  name         String        @db.VarChar(100)
+  cost         Float
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  item         ShopItem      @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([itemId])
+  @@map("shop_item_variants")
+}
+
+model Transaction {
+  transactionId   Int              @id @default(autoincrement()) @map("transaction_id")
+  userId          Int              @map("user_id")
+  itemId          Int              @map("item_id")
+  variantId       Int?             @map("variant_id")
+  itemDescription String           @map("item_description") @db.VarChar(500)
+  cost            Float
+  createdAt       DateTime         @default(now()) @map("created_at")
+  user            User             @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  item            ShopItem         @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+  variant         ShopItemVariant? @relation(fields: [variantId], references: [variantId], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([variantId])
+  @@map("transactions")
+}
+
+model GiftCode {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  email           String
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  itemDescription String    @map("item_description") @db.VarChar(500)
+  imageUrl        String    @map("image_url")
+  filloutUrl      String    @map("fillout_url")
+  isClaimed       Boolean   @default(false) @map("is_claimed")
+  claimedAt       DateTime? @map("claimed_at")
+  emailSentAt     DateTime? @map("email_sent_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([email])
+  @@map("gift_codes")
 }

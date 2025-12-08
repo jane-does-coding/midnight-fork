@@ -22,11 +22,13 @@ export const load: PageServerLoad = async ({ fetch }) => {
     throw redirect(302, '/app/projects');
   }
 
-  const [submissionsResponse, projectsResponse, usersResponse, metricsResponse] = await Promise.all([
+  const [submissionsResponse, projectsResponse, usersResponse, metricsResponse, shopItemsResponse, shopTransactionsResponse] = await Promise.all([
     fetch(`${apiUrl}/api/admin/submissions`, { credentials: 'include' }),
     fetch(`${apiUrl}/api/admin/projects`, { credentials: 'include' }),
     fetch(`${apiUrl}/api/admin/users`, { credentials: 'include' }),
     fetch(`${apiUrl}/api/admin/metrics`, { credentials: 'include' }),
+    fetch(`${apiUrl}/api/shop/admin/items`, { credentials: 'include' }),
+    fetch(`${apiUrl}/api/shop/admin/transactions`, { credentials: 'include' }),
   ]);
 
   if (!submissionsResponse.ok || !projectsResponse.ok || !usersResponse.ok || !metricsResponse.ok) {
@@ -37,6 +39,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
   const projects = await projectsResponse.json();
   const users = await usersResponse.json();
   const metrics = await metricsResponse.json();
+  const shopItems = shopItemsResponse.ok ? await shopItemsResponse.json() : [];
+  const shopTransactions = shopTransactionsResponse.ok ? await shopTransactionsResponse.json() : [];
 
   return {
     user,
@@ -44,6 +48,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
     projects,
     users,
     metrics: metrics.totals ?? metrics,
+    shopItems,
+    shopTransactions,
     apiUrl,
   };
 };

@@ -439,3 +439,278 @@ export async function getLeaderboard(sortBy: 'hours' | 'approved' = 'hours', fet
     throw new Error(`Failed to fetch leaderboard: ${response.status} ${response.statusText} - ${errorText}`);
   }
 }
+
+export type ShopItemVariant = {
+  variantId: number;
+  itemId: number;
+  name: string;
+  cost: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ShopItem = {
+  itemId: number;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  cost: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  variants?: ShopItemVariant[];
+};
+
+export type ShopBalance = {
+  totalApprovedHours: number;
+  totalSpent: number;
+  balance: number;
+};
+
+export type ShopTransaction = {
+  transactionId: number;
+  userId: number;
+  itemId: number;
+  variantId: number | null;
+  itemDescription: string;
+  cost: number;
+  createdAt: string;
+  item: {
+    itemId: number;
+    name: string;
+    imageUrl: string | null;
+  };
+  variant?: {
+    variantId: number;
+    name: string;
+  } | null;
+};
+
+export async function getShopItems(fetchFn: FetchFunction = fetch): Promise<ShopItem[]> {
+  const response = await fetchFn(`${apiUrl}/api/shop/items`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return [];
+}
+
+export async function getShopItem(itemId: number, fetchFn: FetchFunction = fetch): Promise<ShopItem | null> {
+  const response = await fetchFn(`${apiUrl}/api/shop/items/${itemId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return null;
+}
+
+export async function getShopBalance(fetchFn: FetchFunction = fetch): Promise<ShopBalance | null> {
+  const response = await fetchFn(`${apiUrl}/api/shop/auth/balance`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return null;
+}
+
+export async function purchaseShopItem(itemId: number, variantId?: number, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; error?: string; transaction?: ShopTransaction; newBalance?: ShopBalance; specialAction?: string | null }> {
+  const body: { itemId: number; variantId?: number } = { itemId };
+  if (variantId) {
+    body.variantId = variantId;
+  }
+
+  const response = await fetchFn(`${apiUrl}/api/shop/auth/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json();
+  
+  if (response.ok) {
+    return { success: true, transaction: data.transaction, newBalance: data.newBalance, specialAction: data.specialAction };
+  }
+  return { success: false, error: data.message || 'Purchase failed' };
+}
+
+export async function getShopTransactions(fetchFn: FetchFunction = fetch): Promise<ShopTransaction[]> {
+  const response = await fetchFn(`${apiUrl}/api/shop/auth/transactions`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return [];
+}
+
+export async function getAdminShopItems(fetchFn: FetchFunction = fetch): Promise<ShopItem[]> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/items`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return [];
+}
+
+export async function createShopItem(item: { name: string; description?: string; imageUrl?: string; cost: number }, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; item?: ShopItem; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(item),
+  });
+
+  const data = await response.json();
+  
+  if (response.ok) {
+    return { success: true, item: data };
+  }
+  return { success: false, error: data.message || 'Failed to create item' };
+}
+
+export async function updateShopItem(itemId: number, item: { name?: string; description?: string; imageUrl?: string; cost?: number; isActive?: boolean }, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; item?: ShopItem; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/items/${itemId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(item),
+  });
+
+  const data = await response.json();
+  
+  if (response.ok) {
+    return { success: true, item: data };
+  }
+  return { success: false, error: data.message || 'Failed to update item' };
+}
+
+export async function deleteShopItem(itemId: number, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/items/${itemId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return { success: true };
+  }
+  const data = await response.json();
+  return { success: false, error: data.message || 'Failed to delete item' };
+}
+
+export type AdminTransaction = {
+  transactionId: number;
+  userId: number;
+  itemId: number;
+  variantId: number | null;
+  itemDescription: string;
+  cost: number;
+  createdAt: string;
+  user: {
+    userId: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  item: {
+    itemId: number;
+    name: string;
+  };
+  variant?: {
+    variantId: number;
+    name: string;
+  } | null;
+};
+
+export async function getAdminTransactions(fetchFn: FetchFunction = fetch): Promise<AdminTransaction[]> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/transactions`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+  return [];
+}
+
+export async function refundTransaction(transactionId: number, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; error?: string; refundedAmount?: number }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/transactions/${transactionId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return { success: true, refundedAmount: data.refundedAmount };
+  }
+  const data = await response.json().catch(() => ({}));
+  return { success: false, error: data.message || 'Failed to refund transaction' };
+}
+
+export async function createShopVariant(itemId: number, variant: { name: string; cost: number }, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; variant?: ShopItemVariant; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/items/${itemId}/variants`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(variant),
+  });
+
+  const data = await response.json();
+  
+  if (response.ok) {
+    return { success: true, variant: data };
+  }
+  return { success: false, error: data.message || 'Failed to create variant' };
+}
+
+export async function updateShopVariant(variantId: number, variant: { name?: string; cost?: number; isActive?: boolean }, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; variant?: ShopItemVariant; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/variants/${variantId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(variant),
+  });
+
+  const data = await response.json();
+  
+  if (response.ok) {
+    return { success: true, variant: data };
+  }
+  return { success: false, error: data.message || 'Failed to update variant' };
+}
+
+export async function deleteShopVariant(variantId: number, fetchFn: FetchFunction = fetch): Promise<{ success: boolean; error?: string }> {
+  const response = await fetchFn(`${apiUrl}/api/shop/admin/variants/${variantId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (response.ok) {
+    return { success: true };
+  }
+  const data = await response.json();
+  return { success: false, error: data.message || 'Failed to delete variant' };
+}

@@ -16,6 +16,7 @@ export class MailService {
   private otpEmailTemplate: string;
   private submissionApprovedEmailTemplate: string;
   private submissionDeniedEmailTemplate: string;
+  private giftCodeClaimEmailTemplate: string;
   private smimeUtil: SmimeUtil | null = null;
 
   private smimeEnabled: boolean = false;
@@ -100,6 +101,19 @@ export class MailService {
     } catch (error) {
       console.error('Error loading submission denied email template:', error);
       this.submissionDeniedEmailTemplate = this.emailTemplate;
+    }
+
+    try {
+      const giftCodeClaimMjmlTemplate = fs.readFileSync(
+        path.join(__dirname, '../../templates/gift-code-claim.mjml'),
+        'utf8',
+      );
+      const giftCodeClaimHtml = mjml2html(giftCodeClaimMjmlTemplate);
+      this.giftCodeClaimEmailTemplate = giftCodeClaimHtml.html;
+      console.log('Loaded gift code claim email template successfully');
+    } catch (error) {
+      console.error('Error loading gift code claim email template:', error);
+      this.giftCodeClaimEmailTemplate = this.emailTemplate;
     }
 
     this.initializeSmime();
@@ -521,6 +535,35 @@ export class MailService {
     });
 
     console.log(`Sent submission review email to: ${email} (Project: ${data.projectTitle}, Approved: ${data.approved})`);
+
+    return { success: true };
+  }
+
+  async sendGiftCodeEmail(
+    email: string,
+    data: {
+      firstName: string;
+      itemDescription: string;
+      imageUrl: string;
+      claimUrl: string;
+    },
+  ): Promise<{ success: boolean }> {
+    const now = new Date();
+    const dateStr = `${now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+
+    const emailContent = this.giftCodeClaimEmailTemplate
+      .replace(/\{\{date\}\}/g, dateStr)
+      .replace(/\{\{firstName\}\}/g, data.firstName)
+      .replace(/\{\{itemDescription\}\}/g, data.itemDescription)
+      .replace(/\{\{imageUrl\}\}/g, data.imageUrl)
+      .replace(/\{\{claimUrl\}\}/g, data.claimUrl);
+
+    await this.sendImmediateEmail(email, emailContent, 'Claim your stickers here!', {
+      smimeEnabled: this.smimeEnabled,
+      type: 'gift-code-claim',
+    });
+
+    console.log(`Sent gift code claim email to: ${email}`);
 
     return { success: true };
   }
