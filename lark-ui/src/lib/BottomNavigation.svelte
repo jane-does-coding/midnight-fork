@@ -24,6 +24,8 @@
   let shakingTab = $state('');
 
   let referralPopover = $state(false);
+  let travelPopover = $state(false);
+  let shopPopover = $state(false);
   
   function handleLockedClick(tab: string) {
     shakingTab = tab;
@@ -48,14 +50,20 @@
   
   function navigateTo(tab: Tab) {
     if (tab === 'shop' && onboarding) {
+      shopPopover = true;
+      setTimeout(() => (shopPopover = false), 4000);
       handleLockedClick(tab);
       return;
     }
 
+
     if (tab == 'travel' && travelLocked) {
+      travelPopover = true;
+      setTimeout(() => (travelPopover = false), 4000);
       handleLockedClick(tab);
       return;
     }
+
     
     activeTab = tab;
     switch(tab) {
@@ -78,7 +86,7 @@
   }
 
   let onboarding = $state(true);
-  let travelLocked = $state(false);
+  let travelLocked = $state(true);
 
   onMount(async () => {
     const user = await checkAuthStatus();
@@ -114,7 +122,9 @@
         Explore
       </button>
       <button 
-        class="nav-item {onboarding ? 'disabled' : 'enabled'}" 
+        class="nav-item"
+        class:disabled={onboarding}
+        class:enabled={!onboarding}
         class:active={activeTab === 'shop'}
         class:shake={shakingTab === 'shop'}
         onclick={() => navigateTo('shop')}
@@ -124,6 +134,12 @@
         Shop
         {#if onboarding}
           <img class="lock" src="/icons/lock.svg" alt="Lock" />
+
+          {#if shopPopover}
+            <div class="travel-popover">
+              <p>Complete onboarding first!</p>
+            </div>
+          {/if}
         {/if}
       </button>
       <button
@@ -146,6 +162,12 @@
         TRAVEL
         {#if travelLocked}
           <img class="lock" src="/icons/lock.svg" alt="Lock" />
+
+          {#if travelPopover}
+            <div class="travel-popover">
+              <p>You need 10 approved hours!</p>
+            </div>
+          {/if}
         {/if}
       </button>
     </div>
@@ -251,27 +273,28 @@
     bottom: 0;
     left: 0;
     right: 0;
+    height: 15vh;
   }
   
   .bottom-nav-items {
     background: #2D273F;
     z-index: 200;
-    height: 137px;
-    padding: 0 120px;
+    height: 15vh;
+    padding: 0 8vw;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .nav-tabs {
     display: flex;
-    gap: 60px;
+    gap: 4vw;
   }
 
   .nav-item {
     font-family: 'Moga', sans-serif;
-    font-size: 90px;
+    font-size: 9vh;
 
     text-align: center;
     text-box-trim: trim-both;
@@ -327,8 +350,13 @@
   }
 
   .referral img {
-    width: 48px;
-    height: 48px;
+    width: 4vw;
+    height: 4vw;
+  }
+
+  .settings img{
+    width: 4vw;
+    height: 4vw;
   }
 
   .referral:hover img {
@@ -336,12 +364,12 @@
     cursor: pointer;
   }
 
-  .referral-popover {
+  .referral-popover, .travel-popover {
     position: absolute;
     bottom: 120%;
     left: 50%;
     translate: -50% 0;
-    z-index: 200;
+    z-index: 1001;
     padding: 1.5rem 2rem;
     background-image: url('/shapes/shape-popover-2.svg');
     background-size: contain;
@@ -367,13 +395,19 @@
     }
   }
 
-  .referral-popover p {
-    font-size: 16px;
+  .referral-popover p, .travel-popover p {
+    font-size: 1.75vh;
     color: black;
     margin: 0;
     margin-bottom: 24px;
     translate: -10px 1px;
+    font-family: sans-serif;
   }
+
+   .travel-popover p {
+    font-size: 2vh; 
+    translate: -10px 0vh;
+   }
 
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -385,28 +419,6 @@
     animation: shake 400ms;
   }
   
-  @media (max-width: 768px) {
-    .nav-item {
-      font-size: 48px;
-    }
-    
-    .bottom-navigation {
-      height: 80px;
-      padding: 0 1rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .nav-item {
-      font-size: 32px;
-    }
-    
-    .bottom-navigation {
-      height: 60px;
-      padding: 0 0.5rem;
-    }
-  }
-
   .settings.active {
     filter: brightness(0) saturate(100%) invert(78%) sepia(88%) saturate(2130%) hue-rotate(330deg) brightness(101%) contrast(101%);
   }
