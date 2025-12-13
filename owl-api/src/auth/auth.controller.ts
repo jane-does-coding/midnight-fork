@@ -9,6 +9,8 @@ import { AuthGuard } from './auth.guard';
 
 @Controller('api/user/auth')
 export class AuthController {
+  private readonly SESSION_EXPIRY_MS = 21 * 24 * 60 * 60 * 1000;
+
   constructor(private authService: AuthService) {}
 
   @Post('login')
@@ -32,7 +34,7 @@ export class AuthController {
 
       res.cookie('sessionId', result.sessionId, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000,
+        maxAge: this.SESSION_EXPIRY_MS,
       });
       
       if (result.isNewUser && result.email) {

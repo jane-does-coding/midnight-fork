@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma.service';
 import { RedisService } from '../redis.service';
 import { JobLockService } from '../job-lock.service';
 import { MailModule } from '../mail/mail.module';
+import { SlackModule } from '../slack/slack.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MailModule } from '../mail/mail.module';
       limit: 1000000,
     }]),
     MailModule,
+    SlackModule,
   ],
   controllers: [UserController, AdminController, DashboardController],
   providers: [

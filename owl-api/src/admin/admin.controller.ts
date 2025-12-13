@@ -137,4 +137,36 @@ export class AdminController {
   ) {
     return this.adminService.toggleFraudFlag(id, body.isFraud);
   }
+
+  @Put('users/:id/slack')
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  async updateUserSlackId(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { slackUserId: string | null },
+  ) {
+    return this.adminService.updateUserSlackId(id, body.slackUserId);
+  }
+
+  @Get('slack/lookup-by-email')
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  async lookupSlackByEmail(@Req() req: Request) {
+    const email = req.query.email as string;
+    if (!email) {
+      return { found: false, message: 'Email parameter required' };
+    }
+    return this.adminService.lookupSlackByEmail(email);
+  }
+
+  @Get('slack/user-info')
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  async getSlackInfo(@Req() req: Request) {
+    const slackUserId = req.query.slackUserId as string;
+    if (!slackUserId) {
+      return { found: false, message: 'slackUserId parameter required' };
+    }
+    return this.adminService.getSlackInfo(slackUserId);
+  }
 }

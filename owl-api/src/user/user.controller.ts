@@ -6,11 +6,15 @@ import { CompleteRsvpDto } from './dto/complete-rsvp.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { SlackService } from '../slack/slack.service';
 import * as express from 'express';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly slackService: SlackService,
+  ) {}
 
   @Post('/rsvp/initial')
   @HttpCode(200)
@@ -190,5 +194,17 @@ export class UserController {
   async checkHackatimeAccount(@Req() req: express.Request) {
     const userEmail = req.user.email;
     return this.userService.checkHackatimeAccountStatus(userEmail);
+  }
+
+  @Post('api/user/slack/link')
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @HttpCode(200)
+  async linkSlackAccount(@Body() body: { token: string }, @Req() req: express.Request) {
+    const userId = req.user.userId;
+    if (!body.token || typeof body.token !== 'string' || body.token.length !== 64) {
+      return { success: false, message: 'Invalid token format.' };
+    }
+    return this.slackService.linkSlackAccountWithToken(body.token, userId);
   }
 }

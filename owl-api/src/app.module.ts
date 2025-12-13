@@ -12,6 +12,7 @@ import { HealthModule } from "./health/health.module";
 import { UploadsModule } from "./uploads/uploads.module";
 import { ShopModule } from "./shop/shop.module";
 import { GiftCodesModule } from "./gift-codes/gift-codes.module";
+import { SlackModule } from "./slack/slack.module";
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { GiftCodesModule } from "./gift-codes/gift-codes.module";
     HealthModule,
     UploadsModule,
     ShopModule,
-    GiftCodesModule
+    GiftCodesModule,
+    SlackModule
   ],
   providers: [
     {

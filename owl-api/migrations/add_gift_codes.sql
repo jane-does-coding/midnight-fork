@@ -34,3 +34,4 @@ CREATE INDEX IF NOT EXISTS "gift_codes_email_idx" ON "gift_codes"("email");
 SELECT 'gift_codes table created successfully' AS status 
 WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'gift_codes');
 
+

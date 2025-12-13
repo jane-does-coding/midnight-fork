@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { AirtableService } from '../airtable/airtable.service';
 import { MailService } from '../mail/mail.service';
+import { SlackService } from '../slack/slack.service';
 
 const projectAdminInclude = {
   user: {
@@ -34,6 +35,7 @@ export class AdminService {
     private prisma: PrismaService,
     private airtableService: AirtableService,
     private mailService: MailService,
+    private slackService: SlackService,
   ) {}
 
   async getAllSubmissions() {
@@ -245,10 +247,29 @@ export class AdminService {
           console.log(`Email sent for submission ${submissionId} because sendEmail was explicitly true`);
         } catch (error) {
           console.error('Error sending submission review email:', error);
-          // Don't throw error here to avoid breaking the submission update
         }
       } else {
         console.log(`Email NOT sent for submission ${submissionId} because sendEmail was not explicitly true (value: ${sendEmailValue}, type: ${typeof sendEmailValue})`);
+      }
+
+      try {
+        const slackResult = await this.slackService.notifySubmissionReview(
+          updatedSubmission.project.user.email,
+          {
+            projectTitle: updatedSubmission.project.projectTitle,
+            projectId: updatedSubmission.project.projectId,
+            approved: updateSubmissionDto.approvalStatus === 'approved',
+            approvedHours: updateSubmissionDto.approvedHours,
+            feedback: updatedSubmission.hoursJustification,
+          },
+        );
+        if (slackResult.success) {
+          console.log(`Slack notification sent for submission ${submissionId}`);
+        } else {
+          console.log(`Slack notification skipped for submission ${submissionId}: ${slackResult.error}`);
+        }
+      } catch (error) {
+        console.error('Error sending Slack notification:', error);
       }
     }
 
@@ -464,7 +485,26 @@ export class AdminService {
       }
     } catch (error) {
       console.error('Error auto-approving edit requests:', error);
-      // Don't throw error here to avoid breaking the submission update
+    }
+
+    try {
+      const slackResult = await this.slackService.notifySubmissionReview(
+        updatedSubmission.project.user.email,
+        {
+          projectTitle: updatedSubmission.project.projectTitle,
+          projectId: updatedSubmission.project.projectId,
+          approved: true,
+          approvedHours: approvedHours,
+          feedback: userFeedback,
+        },
+      );
+      if (slackResult.success) {
+        console.log(`Slack notification sent for quick-approved submission ${submissionId}`);
+      } else {
+        console.log(`Slack notification skipped for submission ${submissionId}: ${slackResult.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending Slack notification:', error);
     }
 
     return updatedSubmission;
@@ -960,6 +1000,59 @@ export class AdminService {
     });
 
     return updatedProject;
+  }
+
+  async updateUserSlackId(userId: number, slackUserId: string | null) {
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (slackUserId) {
+      const existingLink = await this.prisma.user.findFirst({
+        where: { 
+          slackUserId,
+          NOT: { userId },
+        },
+      });
+
+      if (existingLink) {
+        throw new BadRequestException(`This Slack ID is already linked to user: ${existingLink.email}`);
+      }
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { userId },
+      data: { slackUserId },
+      select: {
+        userId: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        slackUserId: true,
+      },
+    });
+
+    return updatedUser;
+  }
+
+  async lookupSlackByEmail(email: string) {
+    const result = await this.slackService.lookupSlackUserByEmail(email);
+    if (!result) {
+      return { found: false, message: 'No Slack user found with this email' };
+    }
+    return { found: true, ...result };
+  }
+
+  async getSlackInfo(slackUserId: string) {
+    const result = await this.slackService.getSlackUserInfo(slackUserId);
+    if (!result) {
+      return { found: false, message: 'Could not fetch Slack user info' };
+    }
+    return { found: true, ...result };
   }
 
   private async recalculateProjectInternal(

@@ -13,7 +13,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
 
   app.use(helmet({
     contentSecurityPolicy: {

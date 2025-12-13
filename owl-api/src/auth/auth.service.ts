@@ -11,6 +11,7 @@ import { RedisService } from '../redis.service';
 @Injectable()
 export class AuthService {
   private readonly OTP_EXPIRY_MS = 600000;
+  private readonly SESSION_EXPIRY_MS = 21 * 24 * 60 * 60 * 1000; 
 
   constructor(
     private prisma: PrismaService,
@@ -131,7 +132,7 @@ export class AuthService {
         userId: existingUser.userId,
         otpCode: otp,
         otpExpiresAt: expiresAt,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        expiresAt: new Date(Date.now() + this.SESSION_EXPIRY_MS),
       },
     });
 

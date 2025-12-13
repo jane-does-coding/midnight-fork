@@ -14,6 +14,7 @@
 		country: string | null;
 		zipCode: string | null;
 		hackatimeAccount: string | null;
+		slackUserId: string | null;
 		createdAt: string;
 		updatedAt: string;
 	};
@@ -426,6 +427,73 @@ function formatCount(value: number) {
 			}
 		} finally {
 			usersLoading = false;
+		}
+	}
+
+	let slackEditingUserId = $state<number | null>(null);
+	let slackEditValue = $state('');
+	let slackLookupLoading = $state(false);
+	let slackSaving = $state(false);
+	let slackError = $state('');
+	let slackLookupResult = $state<{ found: boolean; slackUserId?: string; displayName?: string; message?: string } | null>(null);
+
+	function startSlackEdit(user: AdminUser) {
+		slackEditingUserId = user.userId;
+		slackEditValue = user.slackUserId ?? '';
+		slackError = '';
+		slackLookupResult = null;
+	}
+
+	function cancelSlackEdit() {
+		slackEditingUserId = null;
+		slackEditValue = '';
+		slackError = '';
+		slackLookupResult = null;
+	}
+
+	async function lookupSlackByEmail(email: string) {
+		slackLookupLoading = true;
+		slackError = '';
+		slackLookupResult = null;
+		try {
+			const response = await fetch(`${apiUrl}/api/admin/slack/lookup-by-email?email=${encodeURIComponent(email)}`, {
+				credentials: 'include',
+			});
+			if (response.ok) {
+				slackLookupResult = await response.json();
+				if (slackLookupResult?.found && slackLookupResult.slackUserId) {
+					slackEditValue = slackLookupResult.slackUserId;
+				}
+			}
+		} catch (e) {
+			slackError = 'Failed to lookup Slack user';
+		} finally {
+			slackLookupLoading = false;
+		}
+	}
+
+	async function saveSlackId(userId: number) {
+		slackSaving = true;
+		slackError = '';
+		try {
+			const response = await fetch(`${apiUrl}/api/admin/users/${userId}/slack`, {
+				method: 'PUT',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slackUserId: slackEditValue.trim() || null }),
+			});
+			if (response.ok) {
+				const updatedUser = await response.json();
+				users = users.map(u => u.userId === userId ? { ...u, slackUserId: updatedUser.slackUserId } : u);
+				cancelSlackEdit();
+			} else {
+				const err = await response.json();
+				slackError = err.message || 'Failed to save';
+			}
+		} catch (e) {
+			slackError = 'Failed to save Slack ID';
+		} finally {
+			slackSaving = false;
 		}
 	}
 
@@ -1758,6 +1826,9 @@ function normalizeUrl(url: string | null): string | null {
 														🕐 Hackatime: <span class="font-mono">{selectedSubmission.project.user.hackatimeAccount}</span>
 													</p>
 												{/if}
+												<p class="text-sm {selectedSubmission.project.user.slackUserId ? 'text-green-300' : 'text-gray-500'}">
+													💬 Slack: {selectedSubmission.project.user.slackUserId ? selectedSubmission.project.user.slackUserId : 'Not linked'}
+												</p>
 												<p class="text-sm text-gray-400">
 													{selectedSubmission.project.user.city ? `${selectedSubmission.project.user.city}, ` : ''}{selectedSubmission.project.user.state}
 												</p>
@@ -2175,8 +2246,62 @@ function normalizeUrl(url: string | null): string | null {
 										<p>{[user.city, user.state, user.zipCode].filter(Boolean).join(', ')}</p>
 										<p>{user.country}</p>
 									</div>
-									<div>
-										<p>Hackatime: {user.hackatimeAccount ?? 'Not linked'}</p>
+									<div class="space-y-2">
+										<p>🕐 Hackatime: {user.hackatimeAccount ?? 'Not linked'}</p>
+										{#if slackEditingUserId === user.userId}
+											<div class="space-y-2 p-3 bg-gray-800 rounded-lg border border-gray-700">
+												<div class="flex gap-2">
+													<input
+														type="text"
+														class="flex-1 rounded-lg border border-gray-600 bg-gray-900 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+														placeholder="Slack User ID (e.g., U12345678)"
+														bind:value={slackEditValue}
+													/>
+													<button
+														class="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-500 rounded transition-colors disabled:opacity-50"
+														onclick={() => lookupSlackByEmail(user.email)}
+														disabled={slackLookupLoading}
+													>
+														{slackLookupLoading ? '...' : 'Lookup'}
+													</button>
+												</div>
+												{#if slackLookupResult}
+													<p class="text-xs {slackLookupResult.found ? 'text-green-400' : 'text-yellow-400'}">
+														{slackLookupResult.found ? `Found: ${slackLookupResult.displayName}` : slackLookupResult.message}
+													</p>
+												{/if}
+												{#if slackError}
+													<p class="text-xs text-red-400">{slackError}</p>
+												{/if}
+												<div class="flex gap-2">
+													<button
+														class="px-2 py-1 text-xs bg-green-600 hover:bg-green-500 rounded transition-colors disabled:opacity-50"
+														onclick={() => saveSlackId(user.userId)}
+														disabled={slackSaving}
+													>
+														{slackSaving ? 'Saving...' : 'Save'}
+													</button>
+													<button
+														class="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+														onclick={cancelSlackEdit}
+													>
+														Cancel
+													</button>
+												</div>
+											</div>
+										{:else}
+											<div class="flex items-center gap-2">
+												<span class={user.slackUserId ? 'text-green-400' : 'text-gray-500'}>
+													💬 Slack: {user.slackUserId ? user.slackUserId : 'Not linked'}
+												</span>
+												<button
+													class="px-2 py-0.5 text-xs bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+													onclick={() => startSlackEdit(user)}
+												>
+													Edit
+												</button>
+											</div>
+										{/if}
 									</div>
 								</div>
 
