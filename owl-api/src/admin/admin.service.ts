@@ -20,6 +20,8 @@ const projectAdminInclude = {
       country: true,
       zipCode: true,
       hackatimeAccount: true,
+      isFraud: true,
+      isSus: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -58,6 +60,8 @@ export class AdminService {
                 zipCode: true,
                 hackatimeAccount: true,
                 airtableRecId: true,
+                isFraud: true,
+                isSus: true,
                 createdAt: true,
                 updatedAt: true,
               },
@@ -1000,6 +1004,54 @@ export class AdminService {
     });
 
     return updatedProject;
+  }
+
+  async toggleUserFraudFlag(userId: number, isFraud: boolean) {
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { userId },
+      data: { isFraud },
+      select: {
+        userId: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isFraud: true,
+      },
+    });
+
+    return updatedUser;
+  }
+
+  async toggleUserSusFlag(userId: number, isSus: boolean) {
+    const user = await this.prisma.user.findUnique({
+      where: { userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { userId },
+      data: { isSus },
+      select: {
+        userId: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        isSus: true,
+      },
+    });
+
+    return updatedUser;
   }
 
   async updateUserSlackId(userId: number, slackUserId: string | null) {

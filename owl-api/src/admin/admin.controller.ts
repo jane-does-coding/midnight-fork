@@ -138,6 +138,26 @@ export class AdminController {
     return this.adminService.toggleFraudFlag(id, body.isFraud);
   }
 
+  @Put('users/:id/fraud-flag')
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  async toggleUserFraudFlag(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { isFraud: boolean },
+  ) {
+    return this.adminService.toggleUserFraudFlag(id, body.isFraud);
+  }
+
+  @Put('users/:id/sus-flag')
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
+  async toggleUserSusFlag(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { isSus: boolean },
+  ) {
+    return this.adminService.toggleUserSusFlag(id, body.isSus);
+  }
+
   @Put('users/:id/slack')
   @UseGuards(RolesGuard)
   @Roles(Role.Admin)

@@ -15,6 +15,8 @@
 		zipCode: string | null;
 		hackatimeAccount: string | null;
 		slackUserId: string | null;
+		isFraud: boolean;
+		isSus: boolean;
 		createdAt: string;
 		updatedAt: string;
 	};
@@ -1030,6 +1032,25 @@ async function recalculateAllProjectsHours() {
 		}
 	}
 
+	async function toggleSusFlag(userId: number, currentValue: boolean) {
+		try {
+			const response = await fetch(`${apiUrl}/api/admin/users/${userId}/sus-flag`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ isSus: !currentValue }),
+			});
+
+			if (response.ok) {
+				await loadSubmissions();
+				await loadProjects();
+				await loadUsers();
+			}
+		} catch (err) {
+			console.error('Failed to toggle sus flag:', err);
+		}
+	}
+
 	async function showSubmissionsTab() {
 		activeTab = 'submissions';
 		if (!submissionsLoaded && !submissionsLoading) {
@@ -1749,10 +1770,21 @@ function normalizeUrl(url: string | null): string | null {
 						{@const projectId = Number(projectIdStr)}
 						{@const selectedSubmissionId = selectedSubmissionByProject[projectId] ?? projectSubmissions[0].submissionId}
 						{@const selectedSubmission = projectSubmissions.find((s: AdminSubmission) => s.submissionId === selectedSubmissionId) ?? projectSubmissions[0]}
-						<div id="submission-card-{projectId}" class="rounded-2xl border border-gray-700 bg-gray-900/70 backdrop-blur p-6 space-y-4">
+						<div id="submission-card-{projectId}" class={`rounded-2xl border bg-gray-900/70 backdrop-blur p-6 space-y-4 ${
+							selectedSubmission.project.user.isSus
+								? 'border-yellow-500'
+								: selectedSubmission.project.isFraud
+								? 'border-red-500'
+								: 'border-gray-700'
+						}`}>
 							{#if selectedSubmission.project.isFraud}
 								<div class="bg-red-600/20 border-2 border-red-500 rounded-lg p-3 mb-4">
 									<p class="text-red-300 font-bold text-center uppercase tracking-wide">⚠️ FRAUD FLAGGED</p>
+								</div>
+							{/if}
+							{#if selectedSubmission.project.user.isSus}
+								<div class="bg-yellow-600/20 border-2 border-yellow-500 rounded-lg p-3 mb-4">
+									<p class="text-yellow-300 font-bold text-center uppercase tracking-wide">⚠️ SUS FLAGGED</p>
 								</div>
 							{/if}
 								{#if projectSubmissions.length > 1}
@@ -1763,7 +1795,11 @@ function normalizeUrl(url: string | null): string | null {
 												<button
 													class={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
 														selectedSubmissionId === sub.submissionId
-															? 'bg-purple-600 border-purple-400 text-white'
+															? selectedSubmission.project.user.isSus
+																? 'bg-yellow-600 border-yellow-400 text-white'
+																: 'bg-purple-600 border-purple-400 text-white'
+															: selectedSubmission.project.user.isSus
+															? 'bg-yellow-600/20 border-yellow-500 text-yellow-300 hover:bg-yellow-600/30'
 															: 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
 													}`}
 													onclick={() => selectedSubmissionByProject = { ...selectedSubmissionByProject, [projectId]: sub.submissionId }}
@@ -1805,14 +1841,16 @@ function normalizeUrl(url: string | null): string | null {
 											</div>
 											<span
 												class={`px-3 py-1 rounded-full text-sm border self-start ${
-													selectedSubmission.approvalStatus === 'approved'
+													selectedSubmission.project.user.isSus
+														? 'bg-yellow-500/20 border-yellow-400 text-yellow-300'
+														: selectedSubmission.approvalStatus === 'approved'
 														? 'bg-green-500/20 border-green-400 text-green-300'
 														: selectedSubmission.approvalStatus === 'rejected'
 														? 'bg-red-500/20 border-red-400 text-red-300'
 														: 'bg-yellow-500/20 border-yellow-400 text-yellow-200'
 												}`}
 											>
-												{selectedSubmission.approvalStatus.toUpperCase()}
+												{selectedSubmission.project.user.isSus ? 'SUS' : selectedSubmission.approvalStatus.toUpperCase()}
 											</span>
 										</div>
 
@@ -1821,6 +1859,18 @@ function normalizeUrl(url: string | null): string | null {
 												<h4 class="text-sm font-semibold uppercase tracking-wide text-gray-400">User Info</h4>
 												<p class="text-lg font-medium">{fullName(selectedSubmission.project.user)}</p>
 												<p class="text-sm text-gray-300">{selectedSubmission.project.user.email}</p>
+												<div class="flex items-center gap-2 mb-2">
+													<button
+														class={`px-3 py-1 text-xs rounded border transition-colors ${
+															selectedSubmission.project.user.isSus
+																? 'bg-yellow-600/20 border-yellow-500 text-yellow-300 hover:bg-yellow-600/30'
+																: 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+														}`}
+														onclick={() => toggleSusFlag(selectedSubmission.project.user.userId, selectedSubmission.project.user.isSus)}
+													>
+														{selectedSubmission.project.user.isSus ? '⚠️ Sus Flagged' : 'Flag as Sus'}
+													</button>
+												</div>
 												{#if selectedSubmission.project.user.hackatimeAccount}
 													<p class="text-sm text-purple-300">
 														🕐 Hackatime: <span class="font-mono">{selectedSubmission.project.user.hackatimeAccount}</span>

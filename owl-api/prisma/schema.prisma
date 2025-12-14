@@ -28,6 +28,8 @@ model User {
   referralCode    String?       @map("referral_code")
   rafflePos       String?       @map("raffle_pos")
   slackUserId     String?       @unique @map("slack_user_id")
+  isFraud         Boolean       @default(false) @map("is_fraud")
+  isSus           Boolean       @default(false) @map("is_sus")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   projects        Project[]

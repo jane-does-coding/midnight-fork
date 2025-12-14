@@ -301,7 +301,33 @@ export class AuthService {
   async getCurrentUser(sessionId: string) {
     const session = await this.prisma.userSession.findUnique({
       where: { id: sessionId },
-      include: { user: true },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            birthday: true,
+            role: true,
+            onboardComplete: true,
+            onboardedAt: true,
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            state: true,
+            country: true,
+            zipCode: true,
+            airtableRecId: true,
+            hackatimeAccount: true,
+            referralCode: true,
+            rafflePos: true,
+            slackUserId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
     });
 
     if (!session || !session.isVerified || session.expiresAt < new Date()) {
